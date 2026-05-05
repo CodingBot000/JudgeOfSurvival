@@ -224,6 +224,13 @@ button:disabled {
   letter-spacing: 0;
 }
 
+.boat-guide {
+  margin: -4px 0 0;
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 .boat-visual {
   overflow: hidden;
   border: 1px solid var(--line);
@@ -240,7 +247,7 @@ button:disabled {
 
 .boat-person text {
   fill: #202426;
-  font-size: 22px;
+  font-size: 13px;
   font-weight: 800;
   pointer-events: none;
 }

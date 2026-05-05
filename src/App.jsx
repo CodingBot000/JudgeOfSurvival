@@ -63,12 +63,12 @@ const MAJOR_POWERS = [
 ];
 
 const LIFEBOAT_POSITIONS = [
-  { x: 120, y: 126 },
-  { x: 228, y: 98 },
-  { x: 336, y: 122 },
-  { x: 444, y: 98 },
-  { x: 192, y: 172 },
-  { x: 384, y: 174 },
+  { x: 100, y: 130, labelY: 172 },
+  { x: 222, y: 96, labelY: 60 },
+  { x: 322, y: 128, labelY: 171 },
+  { x: 456, y: 96, labelY: 60 },
+  { x: 200, y: 182, labelY: 224 },
+  { x: 396, y: 182, labelY: 224 },
 ];
 
 const cx = (...parts) => parts.filter(Boolean).join(" ");
@@ -247,6 +247,7 @@ function TrialScreen({ game, t, onMinorPower, onMajorPower }) {
     <div className="trial-grid">
       <section className="panel lifeboat-panel">
         <PanelHeader icon={<Waves size={18} />} title={t("web.panel.lifeboat")} />
+        <p className="boat-guide">{t("web.guide.color")}</p>
         <LifeboatVisual game={game} t={t} />
         <div className="boat-meters">
           <Meter label={t("web.status.food", { food: game.boat.food })} value={game.boat.food} max={6} />
@@ -505,6 +506,8 @@ function LifeboatVisual({ game, t }) {
         {game.characters.map((character, index) => {
           const position = LIFEBOAT_POSITIONS[index];
           const tone = characterTone(character);
+          const name = characterName(game, character);
+          const labelWidth = Math.max(62, Math.min(104, name.length * 12 + 20));
           return (
             <g key={character.id} className={cx("boat-person", !character.alive && "dead")}>
               <circle
@@ -515,8 +518,18 @@ function LifeboatVisual({ game, t }) {
                 stroke={tone.stroke}
                 strokeWidth="4"
               />
-              <text x={position.x} y={position.y + 7} textAnchor="middle">
-                {characterName(game, character).slice(0, 1)}
+              <rect
+                x={position.x - labelWidth / 2}
+                y={position.labelY - 14}
+                width={labelWidth}
+                height="26"
+                rx="8"
+                fill="#ffffff"
+                stroke={tone.stroke}
+                strokeWidth="2"
+              />
+              <text x={position.x} y={position.labelY + 4} textAnchor="middle">
+                {name}
               </text>
             </g>
           );
