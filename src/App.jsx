@@ -248,6 +248,15 @@ function TrialScreen({ game, t, onMinorPower, onMajorPower }) {
       <section className="panel lifeboat-panel">
         <PanelHeader icon={<Waves size={18} />} title={t("web.panel.lifeboat")} />
         <p className="boat-guide">{t("web.guide.color")}</p>
+        <div className="crisis-block">
+          <PanelHeader icon={<Gauge size={18} />} title={t("web.panel.crisis")} />
+          <div className="crisis-grid">
+            <Meter label={t("web.status.hull", { value: game.boat.hull_damage })} value={game.boat.hull_damage} max={100} />
+            <Meter label={t("web.status.ingress", { value: game.boat.water_ingress })} value={game.boat.water_ingress} max={10} />
+            <Meter label={t("web.status.load", { value: game.boat.load_pressure })} value={game.boat.load_pressure} max={45} />
+            <Meter label={t("web.status.despair", { value: game.boat.despair })} value={game.boat.despair} max={25} />
+          </div>
+        </div>
         <LifeboatVisual game={game} t={t} />
         <div className="boat-meters">
           <Meter label={t("web.status.food", { food: game.boat.food })} value={game.boat.food} max={6} />
@@ -403,6 +412,17 @@ function CharacterCard({ game, character, t }) {
             instigation: character.instigation_count,
           })}
         </span>
+        <span>{t("web.social.target", { value: character.target_pressure || 0 })}</span>
+        <span>
+          {t("web.social.allies", {
+            names: formatCharacterNames(game, character.alliances, t),
+          })}
+        </span>
+        <span>
+          {t("web.social.enemies", {
+            names: formatCharacterNames(game, character.enemies, t),
+          })}
+        </span>
       </div>
 
       {isJudgementDone(game) && (
@@ -430,6 +450,14 @@ function StatBar({ game, character, stat, label }) {
       </div>
     </div>
   );
+}
+
+function formatCharacterNames(game, ids = [], t) {
+  const names = ids
+    .map((id) => game.characters.find((character) => character.id === id))
+    .filter(Boolean)
+    .map((character) => characterName(game, character));
+  return names.length > 0 ? names.join(", ") : t("web.social.none");
 }
 
 function StatValue({ value, delta }) {
