@@ -5,4 +5,5 @@ playwright-report
 test-results
 output
 progress.md
+docs/
 *.log

@@ -20,18 +20,10 @@ import {
   Waves,
 } from "lucide-react";
 import {
-  aliveCount,
-  canUseMajorPower,
-  canUseMinorPower,
+  COMMAND_TYPES,
+  applyCommand,
   createInitialState,
-  getBoatDelta,
-  getCharacterDelta,
-  isJudgementDone,
-  nextTurn,
-  requestFinishChapter,
-  useMajorPower,
-  useMinorPower,
-} from "./game-core/rules.js";
+} from "./survival-core/engine.js";
 import {
   characterJudgement,
   characterName,
@@ -42,6 +34,10 @@ import {
   setLanguage,
   translate,
 } from "./game-adapters/display.js";
+import {
+  DEFAULT_SCENARIO_ID,
+  getScenario,
+} from "./game-adapters/scenario-registry.js";
 
 const NAV_ITEMS = [
   { id: "trial", labelKey: "web.nav.trial", Icon: Waves },
@@ -50,20 +46,28 @@ const NAV_ITEMS = [
   { id: "judgement", labelKey: "web.nav.judgement", Icon: Scale },
 ];
 
-const MINOR_POWERS = [
-  { id: "whisper_fear", labelKey: "ui.button.whisper_fear", Icon: Eye },
-  { id: "nudge_greed", labelKey: "ui.button.nudge_greed", Icon: Coins },
-  { id: "seed_doubt", labelKey: "ui.button.seed_doubt", Icon: ShieldAlert },
-  { id: "false_comfort", labelKey: "ui.button.false_comfort", Icon: MessageCircle },
-  { id: "heavy_silence", labelKey: "ui.button.heavy_silence", Icon: VolumeX },
-];
+const DEFAULT_SCENARIO = getScenario(DEFAULT_SCENARIO_ID);
 
-const MAJOR_POWERS = [
-  { id: "reduce_water", labelKey: "ui.button.reduce_water", Icon: Droplets },
-  { id: "rumor", labelKey: "ui.button.rumor", Icon: MessageCircle },
-  { id: "hidden_food", labelKey: "ui.button.hidden_food", Icon: Package },
-  { id: "storm", labelKey: "ui.button.storm", Icon: CloudLightning },
-];
+const POWER_ICONS = {
+  whisper_fear: Eye,
+  nudge_greed: Coins,
+  seed_doubt: ShieldAlert,
+  false_comfort: MessageCircle,
+  heavy_silence: VolumeX,
+  reduce_water: Droplets,
+  rumor: MessageCircle,
+  hidden_food: Package,
+  storm: CloudLightning,
+};
+
+const STATUS_ICONS = {
+  gauge: Gauge,
+  droplets: Droplets,
+  waves: Waves,
+  heart: HeartPulse,
+  eye: Eye,
+  scale: Scale,
+};
 
 const LIFEBOAT_POSITIONS = [
   { x: 100, y: 130, labelY: 172 },
@@ -77,9 +81,10 @@ const LIFEBOAT_POSITIONS = [
 const cx = (...parts) => parts.filter(Boolean).join(" ");
 
 export default function App() {
-  const [game, setGame] = useState(() => createInitialState());
+  const scenario = DEFAULT_SCENARIO;
+  const [game, setGame] = useState(() => createInitialState(scenario));
   const [screen, setScreen] = useState("trial");
-  const done = isJudgementDone(game);
+  const done = scenario.rules.isJudgementDone(game);
   const t = (key, params) => translate(game, key, params);
 
   useEffect(() => {
@@ -94,7 +99,7 @@ export default function App() {
   }, [done, screen]);
 
   useEffect(() => {
-    const renderText = () => renderGameToText(game, screen);
+    const renderText = () => renderGameToText(game, screen, scenario);
     window.render_game_to_text = renderText;
     window.advanceTime = () => renderText();
     return () => {
@@ -109,8 +114,12 @@ export default function App() {
     setGame((current) => updater(current));
   };
 
+  const runCommand = (command) => {
+    setGame((current) => applyCommand(current, scenario, command));
+  };
+
   const restart = () => {
-    setGame(createInitialState(game.language));
+    setGame(createInitialState(scenario, { language: game.language }));
     setScreen("trial");
   };
 
@@ -160,20 +169,25 @@ export default function App() {
         ))}
       </nav>
 
-      <StatusStrip game={game} t={t} />
+      <StatusStrip game={game} scenario={scenario} t={t} />
 
       <main className="screen-frame">
         {screen === "trial" && (
           <TrialScreen
             game={game}
+            scenario={scenario}
             t={t}
-            onMinorPower={(powerId) => apply((current) => useMinorPower(current, powerId))}
-            onMajorPower={(powerId) => apply((current) => useMajorPower(current, powerId))}
+            onMinorPower={(powerId) =>
+              runCommand({ type: COMMAND_TYPES.USE_MINOR_POWER, powerId })
+            }
+            onMajorPower={(powerId) =>
+              runCommand({ type: COMMAND_TYPES.USE_MAJOR_POWER, powerId })
+            }
           />
         )}
-        {screen === "roster" && <RosterScreen game={game} t={t} />}
+        {screen === "roster" && <RosterScreen game={game} scenario={scenario} t={t} />}
         {screen === "log" && <LogScreen game={game} t={t} />}
-        {screen === "judgement" && <JudgementScreen game={game} t={t} />}
+        {screen === "judgement" && <JudgementScreen game={game} scenario={scenario} t={t} />}
       </main>
 
       <footer className="action-bar">
@@ -182,7 +196,7 @@ export default function App() {
           type="button"
           className="primary-action"
           disabled={done}
-          onClick={() => apply(nextTurn)}
+          onClick={() => runCommand({ type: COMMAND_TYPES.NEXT_TURN })}
         >
           <ChevronRight size={19} aria-hidden="true" />
           <span>{t("ui.button.next_turn")}</span>
@@ -191,7 +205,7 @@ export default function App() {
           id="finish-chapter-btn"
           type="button"
           disabled={done}
-          onClick={() => apply(requestFinishChapter)}
+          onClick={() => runCommand({ type: COMMAND_TYPES.FINISH_CHAPTER })}
         >
           <Scale size={18} aria-hidden="true" />
           <span>{t("ui.button.finish")}</span>
@@ -205,45 +219,15 @@ export default function App() {
   );
 }
 
-function StatusStrip({ game, t }) {
-  const items = [
-    {
-      Icon: Gauge,
-      delta: getBoatDelta(game, "turn"),
-      text: t("ui.status.turn", {
-        turn: game.boat.turn,
-        max_turn: game.boat.max_turn,
-      }),
-    },
-    {
-      Icon: Droplets,
-      delta: getBoatDelta(game, "water"),
-      text: t("ui.status.water", { water: game.boat.water }),
-    },
-    {
-      Icon: Waves,
-      delta: getBoatDelta(game, "stability"),
-      text: t("ui.status.stability", { stability: game.boat.stability }),
-    },
-    {
-      Icon: HeartPulse,
-      delta: getBoatDelta(game, "rescue_chance"),
-      text: t("ui.status.rescue", { rescue: game.boat.rescue_chance }),
-    },
-    {
-      Icon: Eye,
-      delta: getBoatDelta(game, "minor_power"),
-      text: t("ui.status.minor_power", {
-        minor: game.boat.minor_power,
-        max_minor: game.boat.max_minor_power,
-      }),
-    },
-    {
-      Icon: Scale,
-      delta: getBoatDelta(game, "major_power"),
-      text: t("ui.status.major_power", { major: game.boat.major_power }),
-    },
-  ];
+function StatusStrip({ game, scenario, t }) {
+  const items = scenario.meters.status.map((metric) => {
+    const Icon = STATUS_ICONS[metric.icon] || Gauge;
+    return {
+      Icon,
+      delta: scenario.rules.getBoatDelta(game, metric.id),
+      text: statusText(game, scenario, metric.id, metric.labelKey, t),
+    };
+  });
 
   return (
     <section className="status-strip" aria-label="Chapter status">
@@ -258,7 +242,7 @@ function StatusStrip({ game, t }) {
   );
 }
 
-function TrialScreen({ game, t, onMinorPower, onMajorPower }) {
+function TrialScreen({ game, scenario, t, onMinorPower, onMajorPower }) {
   return (
     <div className="trial-grid">
       <section className="panel lifeboat-panel">
@@ -267,17 +251,28 @@ function TrialScreen({ game, t, onMinorPower, onMajorPower }) {
         <div className="crisis-block">
           <PanelHeader icon={<Gauge size={18} />} title={t("web.panel.crisis")} />
           <div className="crisis-grid">
-            <Meter label={t("web.status.hull", { value: game.boat.hull_damage })} value={game.boat.hull_damage} max={100} delta={getBoatDelta(game, "hull_damage")} />
-            <Meter label={t("web.status.ingress", { value: game.boat.water_ingress })} value={game.boat.water_ingress} max={10} delta={getBoatDelta(game, "water_ingress")} />
-            <Meter label={t("web.status.load", { value: game.boat.load_pressure })} value={game.boat.load_pressure} max={45} delta={getBoatDelta(game, "load_pressure")} />
-            <Meter label={t("web.status.despair", { value: game.boat.despair })} value={game.boat.despair} max={25} delta={getBoatDelta(game, "despair")} />
+            {scenario.meters.crisis.map((meter) => (
+              <ScenarioMeter
+                key={meter.id}
+                game={game}
+                scenario={scenario}
+                meter={meter}
+                t={t}
+              />
+            ))}
           </div>
         </div>
         <LifeboatVisual game={game} t={t} />
         <div className="boat-meters">
-          <Meter label={t("web.status.food", { food: game.boat.food })} value={game.boat.food} max={6} delta={getBoatDelta(game, "food")} />
-          <Meter label={t("web.status.storm", { level: game.boat.storm_level })} value={game.boat.storm_level} max={4} delta={getBoatDelta(game, "storm_level")} />
-          <Meter label={t("web.status.alive", { count: aliveCount(game) })} value={aliveCount(game)} max={6} delta={getBoatDelta(game, "alive_count")} />
+          {scenario.meters.support.map((meter) => (
+            <ScenarioMeter
+              key={meter.id}
+              game={game}
+              scenario={scenario}
+              meter={meter}
+              t={t}
+            />
+          ))}
         </div>
       </section>
 
@@ -288,6 +283,7 @@ function TrialScreen({ game, t, onMinorPower, onMajorPower }) {
 
       <PowerPanel
         game={game}
+        scenario={scenario}
         t={t}
         onMinorPower={onMinorPower}
         onMajorPower={onMajorPower}
@@ -296,9 +292,9 @@ function TrialScreen({ game, t, onMinorPower, onMajorPower }) {
   );
 }
 
-function PowerPanel({ game, t, onMinorPower, onMajorPower }) {
-  const minorDisabled = !canUseMinorPower(game);
-  const majorDisabled = !canUseMajorPower(game);
+function PowerPanel({ game, scenario, t, onMinorPower, onMajorPower }) {
+  const minorDisabled = !scenario.rules.canUseMinorPower(game);
+  const majorDisabled = !scenario.rules.canUseMajorPower(game);
 
   return (
     <section className="panel power-panel">
@@ -311,10 +307,12 @@ function PowerPanel({ game, t, onMinorPower, onMajorPower }) {
               max_minor: game.boat.max_minor_power,
             })}
           </span>
-          <DeltaValue delta={getBoatDelta(game, "minor_power")} />
+          <DeltaValue delta={scenario.rules.getBoatDelta(game, "minor_power")} />
         </div>
         <div className="power-buttons">
-          {MINOR_POWERS.map(({ id, labelKey, Icon }) => (
+          {scenario.powers.minor.map(({ id, labelKey }) => {
+            const Icon = POWER_ICONS[id] || Eye;
+            return (
             <button
               id={`power-${id}`}
               key={id}
@@ -325,7 +323,8 @@ function PowerPanel({ game, t, onMinorPower, onMajorPower }) {
               <Icon size={18} aria-hidden="true" />
               <span>{t(labelKey)}</span>
             </button>
-          ))}
+          );
+          })}
         </div>
       </div>
 
@@ -333,10 +332,12 @@ function PowerPanel({ game, t, onMinorPower, onMajorPower }) {
         <PanelHeader icon={<Scale size={18} />} title={t("ui.panel.major_powers")} />
         <div className="power-status">
           <span>{t("ui.power_status.major", { major: game.boat.major_power })}</span>
-          <DeltaValue delta={getBoatDelta(game, "major_power")} />
+          <DeltaValue delta={scenario.rules.getBoatDelta(game, "major_power")} />
         </div>
         <div className="power-buttons">
-          {MAJOR_POWERS.map(({ id, labelKey, Icon }) => (
+          {scenario.powers.major.map(({ id, labelKey }) => {
+            const Icon = POWER_ICONS[id] || Scale;
+            return (
             <button
               id={`power-${id}`}
               key={id}
@@ -347,20 +348,27 @@ function PowerPanel({ game, t, onMinorPower, onMajorPower }) {
               <Icon size={18} aria-hidden="true" />
               <span>{t(labelKey)}</span>
             </button>
-          ))}
+          );
+          })}
         </div>
       </div>
     </section>
   );
 }
 
-function RosterScreen({ game, t }) {
+function RosterScreen({ game, scenario, t }) {
   return (
     <section className="wide-screen">
       <PanelHeader icon={<Users size={18} />} title={t("ui.panel.characters")} />
       <div className="character-grid">
         {game.characters.map((character) => (
-          <CharacterCard key={character.id} game={game} character={character} t={t} />
+          <CharacterCard
+            key={character.id}
+            game={game}
+            scenario={scenario}
+            character={character}
+            t={t}
+          />
         ))}
       </div>
     </section>
@@ -376,11 +384,11 @@ function LogScreen({ game, t }) {
   );
 }
 
-function JudgementScreen({ game, t }) {
+function JudgementScreen({ game, scenario, t }) {
   return (
     <section className="wide-screen judgement-screen">
       <PanelHeader icon={<Scale size={18} />} title={t("web.nav.judgement")} />
-      {!isJudgementDone(game) && <p className="pending-text">{t("web.judgement.pending")}</p>}
+      {!scenario.rules.isJudgementDone(game) && <p className="pending-text">{t("web.judgement.pending")}</p>}
       <div className="judgement-list">
         {game.characters.map((character) => (
           <div className="judgement-row" key={character.id}>
@@ -398,7 +406,7 @@ function JudgementScreen({ game, t }) {
   );
 }
 
-function CharacterCard({ game, character, t }) {
+function CharacterCard({ game, scenario, character, t }) {
   const statusKey = character.alive
     ? "ui.character.status_alive"
     : "ui.character.status_dead";
@@ -416,22 +424,22 @@ function CharacterCard({ game, character, t }) {
       </header>
 
       <div className="stat-stack">
-        <StatBar game={game} character={character} stat="health" label={t("web.stat.health")} />
-        <StatBar game={game} character={character} stat="fear" label={t("web.stat.fear")} />
-        <StatBar game={game} character={character} stat="greed" label={t("web.stat.greed")} />
-        <StatBar game={game} character={character} stat="trust" label={t("web.stat.trust")} />
-        <StatBar game={game} character={character} stat="morality" label={t("web.stat.morality")} />
-        <StatBar game={game} character={character} stat="influence" label={t("web.stat.influence")} />
+        <StatBar game={game} scenario={scenario} character={character} stat="health" label={t("web.stat.health")} />
+        <StatBar game={game} scenario={scenario} character={character} stat="fear" label={t("web.stat.fear")} />
+        <StatBar game={game} scenario={scenario} character={character} stat="greed" label={t("web.stat.greed")} />
+        <StatBar game={game} scenario={scenario} character={character} stat="trust" label={t("web.stat.trust")} />
+        <StatBar game={game} scenario={scenario} character={character} stat="morality" label={t("web.stat.morality")} />
+        <StatBar game={game} scenario={scenario} character={character} stat="influence" label={t("web.stat.influence")} />
       </div>
 
       <div className="character-flags">
         {character.has_hidden_resource && <span>{t("web.status.hidden")}</span>}
-        <MetricChip label={t("web.count.betrayal")} value={character.betrayal_count} delta={getCharacterDelta(game, character.id, "betrayal_count")} />
-        <MetricChip label={t("web.count.sacrifice")} value={character.sacrifice_count} delta={getCharacterDelta(game, character.id, "sacrifice_count")} />
-        <MetricChip label={t("web.count.hypocrisy")} value={character.hypocrisy_count} delta={getCharacterDelta(game, character.id, "hypocrisy_count")} />
-        <MetricChip label={t("web.count.instigation")} value={character.instigation_count} delta={getCharacterDelta(game, character.id, "instigation_count")} />
-        <MetricChip label={t("web.social.target_label")} value={character.target_pressure || 0} delta={getCharacterDelta(game, character.id, "target_pressure")} />
-        <MetricChip label={t("web.social.accusation")} value={character.accusation_score || 0} delta={getCharacterDelta(game, character.id, "accusation_score")} />
+        <MetricChip label={t("web.count.betrayal")} value={character.betrayal_count} delta={scenario.rules.getCharacterDelta(game, character.id, "betrayal_count")} />
+        <MetricChip label={t("web.count.sacrifice")} value={character.sacrifice_count} delta={scenario.rules.getCharacterDelta(game, character.id, "sacrifice_count")} />
+        <MetricChip label={t("web.count.hypocrisy")} value={character.hypocrisy_count} delta={scenario.rules.getCharacterDelta(game, character.id, "hypocrisy_count")} />
+        <MetricChip label={t("web.count.instigation")} value={character.instigation_count} delta={scenario.rules.getCharacterDelta(game, character.id, "instigation_count")} />
+        <MetricChip label={t("web.social.target_label")} value={character.target_pressure || 0} delta={scenario.rules.getCharacterDelta(game, character.id, "target_pressure")} />
+        <MetricChip label={t("web.social.accusation")} value={character.accusation_score || 0} delta={scenario.rules.getCharacterDelta(game, character.id, "accusation_score")} />
         <span>
           {t("web.social.allies", {
             names: formatCharacterNames(game, character.alliances, t),
@@ -444,7 +452,7 @@ function CharacterCard({ game, character, t }) {
         </span>
       </div>
 
-      {isJudgementDone(game) && (
+      {scenario.rules.isJudgementDone(game) && (
         <div className="character-judgement">
           {t("ui.character.judgement", {
             judgement: characterJudgement(game, character),
@@ -455,8 +463,8 @@ function CharacterCard({ game, character, t }) {
   );
 }
 
-function StatBar({ game, character, stat, label }) {
-  const delta = getCharacterDelta(game, character.id, stat);
+function StatBar({ game, scenario, character, stat, label }) {
+  const delta = scenario.rules.getCharacterDelta(game, character.id, stat);
   const value = character[stat];
   return (
     <div className="stat-row">
@@ -477,6 +485,54 @@ function formatCharacterNames(game, ids = [], t) {
     .filter(Boolean)
     .map((character) => characterName(game, character));
   return names.length > 0 ? names.join(", ") : t("web.social.none");
+}
+
+function ScenarioMeter({ game, scenario, meter, t }) {
+  const value = scenarioMetricValue(game, scenario, meter.id);
+  const label = t(meter.labelKey, { [meter.valueParam || "value"]: value });
+  return (
+    <Meter
+      label={label}
+      value={value}
+      max={meter.max}
+      delta={scenario.rules.getBoatDelta(game, meter.id)}
+    />
+  );
+}
+
+function scenarioMetricValue(game, scenario, id) {
+  if (id === "alive_count") {
+    return scenario.rules.aliveCount(game);
+  }
+  return Number(game.boat?.[id] || 0);
+}
+
+function statusText(game, scenario, id, labelKey, t) {
+  if (id === "turn") {
+    return t(labelKey, {
+      turn: game.boat.turn,
+      max_turn: game.boat.max_turn,
+    });
+  }
+  if (id === "water") {
+    return t(labelKey, { water: game.boat.water });
+  }
+  if (id === "stability") {
+    return t(labelKey, { stability: game.boat.stability });
+  }
+  if (id === "rescue_chance") {
+    return t(labelKey, { rescue: game.boat.rescue_chance });
+  }
+  if (id === "minor_power") {
+    return t(labelKey, {
+      minor: game.boat.minor_power,
+      max_minor: game.boat.max_minor_power,
+    });
+  }
+  if (id === "major_power") {
+    return t(labelKey, { major: game.boat.major_power });
+  }
+  return t(labelKey, { value: scenarioMetricValue(game, scenario, id) });
 }
 
 function StatValue({ value, delta }) {

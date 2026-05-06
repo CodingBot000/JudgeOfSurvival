@@ -3,11 +3,17 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const coreDir = path.join(root, "src", "game-core");
-const coreFiles = fs
-  .readdirSync(coreDir)
-  .filter((fileName) => fileName.endsWith(".js"))
-  .map((fileName) => path.join(coreDir, fileName));
+const coreDirs = [
+  path.join(root, "src", "survival-core"),
+  path.join(root, "src", "game-core"),
+];
+const survivalCoreDir = path.join(root, "src", "survival-core");
+const coreFiles = coreDirs.flatMap((coreDir) =>
+  fs
+    .readdirSync(coreDir)
+    .filter((fileName) => fileName.endsWith(".js"))
+    .map((fileName) => path.join(coreDir, fileName)),
+);
 
 const bannedPatterns = [
   { label: "React import", pattern: /from\s+["']react["']/ },
@@ -18,6 +24,11 @@ const bannedPatterns = [
   { label: "translation table", pattern: /\bTRANSLATIONS\b/ },
   { label: "language content list", pattern: /\bLANGUAGE_CODES\b/ },
   { label: "CSS import", pattern: /import\s+["'][^"']+\.css["']/ },
+];
+
+const survivalCoreOnlyBannedPatterns = [
+  { label: "lifeboat scenario term", pattern: /\blifeboat\b|\bboat\b|\bhull\b/i },
+  { label: "specific actor id", pattern: /\bchairman\b|\bnurse\b|\bsoldier\b|\bstowaway\b/i },
 ];
 
 for (const filePath of coreFiles) {
@@ -31,8 +42,22 @@ for (const filePath of coreFiles) {
   }
 }
 
+for (const filePath of coreFiles.filter((candidate) =>
+  candidate.startsWith(survivalCoreDir),
+)) {
+  const source = fs.readFileSync(filePath, "utf8");
+  for (const { label, pattern } of survivalCoreOnlyBannedPatterns) {
+    assert.equal(
+      pattern.test(source),
+      false,
+      `${path.relative(root, filePath)} must not contain ${label}`,
+    );
+  }
+}
+
 const appSource = fs.readFileSync(path.join(root, "src", "App.jsx"), "utf8");
-assert.match(appSource, /from\s+"\.\/game-core\/rules\.js"/);
+assert.match(appSource, /from\s+"\.\/survival-core\/engine\.js"/);
+assert.match(appSource, /from\s+"\.\/game-adapters\/scenario-registry\.js"/);
 assert.match(appSource, /from\s+"\.\/game-adapters\/display\.js"/);
 
 console.log("Core boundary smoke test passed.");

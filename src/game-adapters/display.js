@@ -1,10 +1,5 @@
 import { LANGUAGE_CODES, TRANSLATIONS } from "../content/localization.js";
-import {
-  aliveCount,
-  canUseMajorPower,
-  canUseMinorPower,
-  isJudgementDone,
-} from "../game-core/rules.js";
+import { getScenario } from "./scenario-registry.js";
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
@@ -48,7 +43,7 @@ export function characterJudgement(state, character) {
   return translate(state, character.judgement || "judgement.unjudged");
 }
 
-export function renderGameToText(state, screen = "trial") {
+export function renderGameToText(state, screen = "trial", scenario = getScenario(state.scenarioId)) {
   const visibleCharacters = state.characters.map((character, index) => ({
     id: character.id,
     name: characterName(state, character),
@@ -81,12 +76,12 @@ export function renderGameToText(state, screen = "trial") {
     language: state.language,
     boat: { ...state.boat },
     boat_deltas: state.boatStatDeltas || {},
-    alive_count: aliveCount(state),
+    alive_count: scenario.rules.aliveCount(state),
     controls: {
-      minor_powers_enabled: canUseMinorPower(state),
-      major_powers_enabled: canUseMajorPower(state),
-      next_turn_enabled: !isJudgementDone(state),
-      finish_enabled: !isJudgementDone(state),
+      minor_powers_enabled: scenario.rules.canUseMinorPower(state),
+      major_powers_enabled: scenario.rules.canUseMajorPower(state),
+      next_turn_enabled: !scenario.rules.isJudgementDone(state),
+      finish_enabled: !scenario.rules.isJudgementDone(state),
     },
     character_deltas: state.characterStatDeltas || {},
     characters: visibleCharacters,

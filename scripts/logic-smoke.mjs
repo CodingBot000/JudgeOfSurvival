@@ -1,22 +1,38 @@
 import assert from "node:assert/strict";
 import {
+  COMMAND_TYPES,
+  applyCommand,
   createInitialState,
-  getBoatDelta,
-  getCharacterDelta,
-  nextTurn,
-  requestFinishChapter,
-  useMajorPower,
-  useMinorPower,
-} from "../src/game-core/rules.js";
+} from "../src/survival-core/engine.js";
 import {
   formatLogEntry,
   setLanguage,
   translate,
 } from "../src/game-adapters/display.js";
+import { getScenario } from "../src/game-adapters/scenario-registry.js";
 
-let state = createInitialState();
+const scenario = getScenario();
+const { getBoatDelta, getCharacterDelta } = scenario.rules;
+const nextTurn = (current) =>
+  applyCommand(current, scenario, { type: COMMAND_TYPES.NEXT_TURN });
+const requestFinishChapter = (current) =>
+  applyCommand(current, scenario, { type: COMMAND_TYPES.FINISH_CHAPTER });
+const useMajorPower = (current, powerId) =>
+  applyCommand(current, scenario, {
+    type: COMMAND_TYPES.USE_MAJOR_POWER,
+    powerId,
+  });
+const useMinorPower = (current, powerId) =>
+  applyCommand(current, scenario, {
+    type: COMMAND_TYPES.USE_MINOR_POWER,
+    powerId,
+  });
+
+let state = createInitialState(scenario);
 
 assert.equal(state.characters.length, 6);
+assert.equal(state.scenarioId, "lifeboat-of-greed");
+assert.equal(state.schemaVersion, 1);
 assert.equal(state.boat.max_turn, 18);
 assert.equal(state.boat.water, 5);
 assert.equal(state.boat.load_pressure, 32);
