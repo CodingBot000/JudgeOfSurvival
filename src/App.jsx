@@ -23,22 +23,25 @@ import {
   aliveCount,
   canUseMajorPower,
   canUseMinorPower,
+  createInitialState,
+  getBoatDelta,
+  getCharacterDelta,
+  isJudgementDone,
+  nextTurn,
+  requestFinishChapter,
+  useMajorPower,
+  useMinorPower,
+} from "./game-core/rules.js";
+import {
   characterJudgement,
   characterName,
   characterRole,
-  createInitialState,
   formatLogEntry,
-  getCharacterDelta,
   getLanguageOptions,
-  isJudgementDone,
-  nextTurn,
   renderGameToText,
-  requestFinishChapter,
   setLanguage,
   translate,
-  useMajorPower,
-  useMinorPower,
-} from "./game/logic.js";
+} from "./game-adapters/display.js";
 
 const NAV_ITEMS = [
   { id: "trial", labelKey: "web.nav.trial", Icon: Waves },
@@ -206,36 +209,49 @@ function StatusStrip({ game, t }) {
   const items = [
     {
       Icon: Gauge,
+      delta: getBoatDelta(game, "turn"),
       text: t("ui.status.turn", {
         turn: game.boat.turn,
         max_turn: game.boat.max_turn,
       }),
     },
-    { Icon: Droplets, text: t("ui.status.water", { water: game.boat.water }) },
+    {
+      Icon: Droplets,
+      delta: getBoatDelta(game, "water"),
+      text: t("ui.status.water", { water: game.boat.water }),
+    },
     {
       Icon: Waves,
+      delta: getBoatDelta(game, "stability"),
       text: t("ui.status.stability", { stability: game.boat.stability }),
     },
     {
       Icon: HeartPulse,
+      delta: getBoatDelta(game, "rescue_chance"),
       text: t("ui.status.rescue", { rescue: game.boat.rescue_chance }),
     },
     {
       Icon: Eye,
+      delta: getBoatDelta(game, "minor_power"),
       text: t("ui.status.minor_power", {
         minor: game.boat.minor_power,
         max_minor: game.boat.max_minor_power,
       }),
     },
-    { Icon: Scale, text: t("ui.status.major_power", { major: game.boat.major_power }) },
+    {
+      Icon: Scale,
+      delta: getBoatDelta(game, "major_power"),
+      text: t("ui.status.major_power", { major: game.boat.major_power }),
+    },
   ];
 
   return (
     <section className="status-strip" aria-label="Chapter status">
-      {items.map(({ Icon, text }) => (
+      {items.map(({ Icon, text, delta }) => (
         <div className="status-pill" key={text}>
           <Icon size={17} aria-hidden="true" />
           <span>{text}</span>
+          <DeltaValue delta={delta} />
         </div>
       ))}
     </section>
@@ -251,17 +267,17 @@ function TrialScreen({ game, t, onMinorPower, onMajorPower }) {
         <div className="crisis-block">
           <PanelHeader icon={<Gauge size={18} />} title={t("web.panel.crisis")} />
           <div className="crisis-grid">
-            <Meter label={t("web.status.hull", { value: game.boat.hull_damage })} value={game.boat.hull_damage} max={100} />
-            <Meter label={t("web.status.ingress", { value: game.boat.water_ingress })} value={game.boat.water_ingress} max={10} />
-            <Meter label={t("web.status.load", { value: game.boat.load_pressure })} value={game.boat.load_pressure} max={45} />
-            <Meter label={t("web.status.despair", { value: game.boat.despair })} value={game.boat.despair} max={25} />
+            <Meter label={t("web.status.hull", { value: game.boat.hull_damage })} value={game.boat.hull_damage} max={100} delta={getBoatDelta(game, "hull_damage")} />
+            <Meter label={t("web.status.ingress", { value: game.boat.water_ingress })} value={game.boat.water_ingress} max={10} delta={getBoatDelta(game, "water_ingress")} />
+            <Meter label={t("web.status.load", { value: game.boat.load_pressure })} value={game.boat.load_pressure} max={45} delta={getBoatDelta(game, "load_pressure")} />
+            <Meter label={t("web.status.despair", { value: game.boat.despair })} value={game.boat.despair} max={25} delta={getBoatDelta(game, "despair")} />
           </div>
         </div>
         <LifeboatVisual game={game} t={t} />
         <div className="boat-meters">
-          <Meter label={t("web.status.food", { food: game.boat.food })} value={game.boat.food} max={6} />
-          <Meter label={t("web.status.storm", { level: game.boat.storm_level })} value={game.boat.storm_level} max={4} />
-          <Meter label={t("web.status.alive", { count: aliveCount(game) })} value={aliveCount(game)} max={6} />
+          <Meter label={t("web.status.food", { food: game.boat.food })} value={game.boat.food} max={6} delta={getBoatDelta(game, "food")} />
+          <Meter label={t("web.status.storm", { level: game.boat.storm_level })} value={game.boat.storm_level} max={4} delta={getBoatDelta(game, "storm_level")} />
+          <Meter label={t("web.status.alive", { count: aliveCount(game) })} value={aliveCount(game)} max={6} delta={getBoatDelta(game, "alive_count")} />
         </div>
       </section>
 
@@ -289,10 +305,13 @@ function PowerPanel({ game, t, onMinorPower, onMajorPower }) {
       <div className="power-group">
         <PanelHeader icon={<Eye size={18} />} title={t("ui.panel.minor_powers")} />
         <div className="power-status">
-          {t("ui.power_status.minor", {
-            minor: game.boat.minor_power,
-            max_minor: game.boat.max_minor_power,
-          })}
+          <span>
+            {t("ui.power_status.minor", {
+              minor: game.boat.minor_power,
+              max_minor: game.boat.max_minor_power,
+            })}
+          </span>
+          <DeltaValue delta={getBoatDelta(game, "minor_power")} />
         </div>
         <div className="power-buttons">
           {MINOR_POWERS.map(({ id, labelKey, Icon }) => (
@@ -312,7 +331,10 @@ function PowerPanel({ game, t, onMinorPower, onMajorPower }) {
 
       <div className="power-group major">
         <PanelHeader icon={<Scale size={18} />} title={t("ui.panel.major_powers")} />
-        <div className="power-status">{t("ui.power_status.major", { major: game.boat.major_power })}</div>
+        <div className="power-status">
+          <span>{t("ui.power_status.major", { major: game.boat.major_power })}</span>
+          <DeltaValue delta={getBoatDelta(game, "major_power")} />
+        </div>
         <div className="power-buttons">
           {MAJOR_POWERS.map(({ id, labelKey, Icon }) => (
             <button
@@ -404,15 +426,12 @@ function CharacterCard({ game, character, t }) {
 
       <div className="character-flags">
         {character.has_hidden_resource && <span>{t("web.status.hidden")}</span>}
-        <span>
-          {t("web.status.counts", {
-            betrayal: character.betrayal_count,
-            sacrifice: character.sacrifice_count,
-            hypocrisy: character.hypocrisy_count,
-            instigation: character.instigation_count,
-          })}
-        </span>
-        <span>{t("web.social.target", { value: character.target_pressure || 0 })}</span>
+        <MetricChip label={t("web.count.betrayal")} value={character.betrayal_count} delta={getCharacterDelta(game, character.id, "betrayal_count")} />
+        <MetricChip label={t("web.count.sacrifice")} value={character.sacrifice_count} delta={getCharacterDelta(game, character.id, "sacrifice_count")} />
+        <MetricChip label={t("web.count.hypocrisy")} value={character.hypocrisy_count} delta={getCharacterDelta(game, character.id, "hypocrisy_count")} />
+        <MetricChip label={t("web.count.instigation")} value={character.instigation_count} delta={getCharacterDelta(game, character.id, "instigation_count")} />
+        <MetricChip label={t("web.social.target_label")} value={character.target_pressure || 0} delta={getCharacterDelta(game, character.id, "target_pressure")} />
+        <MetricChip label={t("web.social.accusation")} value={character.accusation_score || 0} delta={getCharacterDelta(game, character.id, "accusation_score")} />
         <span>
           {t("web.social.allies", {
             names: formatCharacterNames(game, character.alliances, t),
@@ -464,13 +483,27 @@ function StatValue({ value, delta }) {
   return (
     <span className={cx("stat-value", delta > 0 && "up", delta < 0 && "down")}>
       {value}
-      {delta !== 0 && (
-        <span>
-          {" "}
-          ({delta > 0 ? "+" : ""}
-          {delta})
-        </span>
-      )}
+      <DeltaValue delta={delta} />
+    </span>
+  );
+}
+
+function DeltaValue({ delta }) {
+  if (!delta) {
+    return null;
+  }
+  return (
+    <span className={cx("delta-value", delta > 0 && "up", delta < 0 && "down")}>
+      ({delta > 0 ? "+" : ""}
+      {delta})
+    </span>
+  );
+}
+
+function MetricChip({ label, value, delta }) {
+  return (
+    <span className="metric-chip">
+      {label} <StatValue value={value} delta={delta} />
     </span>
   );
 }
@@ -583,12 +616,13 @@ function characterTone(character) {
   return { fill: "#f4ede2", stroke: "#4d5961" };
 }
 
-function Meter({ label, value, max }) {
+function Meter({ label, value, max, delta = 0 }) {
   const width = `${Math.max(0, Math.min(100, (value / max) * 100))}%`;
   return (
     <div className="meter">
       <div className="meter-label">
         <span>{label}</span>
+        <DeltaValue delta={delta} />
       </div>
       <div className="meter-track">
         <span style={{ width }} />

@@ -1,14 +1,18 @@
 import assert from "node:assert/strict";
 import {
   createInitialState,
-  formatLogEntry,
+  getBoatDelta,
+  getCharacterDelta,
   nextTurn,
   requestFinishChapter,
-  setLanguage,
-  translate,
   useMajorPower,
   useMinorPower,
-} from "../src/game/logic.js";
+} from "../src/game-core/rules.js";
+import {
+  formatLogEntry,
+  setLanguage,
+  translate,
+} from "../src/game-adapters/display.js";
 
 let state = createInitialState();
 
@@ -36,17 +40,27 @@ state = setLanguage(state, "ko");
 state = useMajorPower(state, "reduce_water");
 assert.equal(state.boat.water, 4);
 assert.equal(state.boat.major_power, 3);
+assert.equal(getBoatDelta(state, "water"), -1);
+assert.equal(getBoatDelta(state, "major_power"), -1);
+assert.equal(getBoatDelta(state, "despair"), 1);
 assert.equal(state.characterStatDeltas.chairman.fear, 8);
+assert.equal(getCharacterDelta(state, "chairman", "fear"), 8);
+assert.equal(getCharacterDelta(state, "chairman", "target_pressure"), 4);
 
 state = useMajorPower(state, "hidden_food");
 assert.equal(state.boat.major_power, 2);
 assert.equal(state.characters.find((character) => character.id === "chairman").has_hidden_resource, true);
+assert.equal(getBoatDelta(state, "major_power"), -1);
 assert.equal(state.characterStatDeltas.chairman.greed, 10);
 assert.equal(state.characterStatDeltas.chairman.fear, undefined);
+assert.equal(getCharacterDelta(state, "chairman", "hypocrisy_count"), 1);
+assert.equal(getCharacterDelta(state, "chairman", "accusation_score"), 6);
 
 state = useMinorPower(state, "false_comfort");
 assert.equal(state.boat.minor_power, 2);
 assert.equal(state.boat.rescue_chance, 27);
+assert.equal(getBoatDelta(state, "minor_power"), -1);
+assert.equal(getBoatDelta(state, "rescue_chance"), -3);
 assert.equal(state.characterStatDeltas.chairman.fear, -3);
 assert.equal(state.characterStatDeltas.chairman.trust, 1);
 
@@ -63,6 +77,8 @@ assert.equal(state.boat.major_power, 0);
 
 state = useMajorPower(state, "reduce_water");
 assert.ok(formatLogEntry(state, state.logs.at(-1)).includes("강한 권능이 남아 있지 않습니다"));
+assert.equal(Object.keys(state.boatStatDeltas).length, 0);
+assert.equal(Object.keys(state.characterStatDeltas).length, 0);
 
 const healthBeforeTurn = Object.fromEntries(
   state.characters.map((character) => [character.id, character.health]),
@@ -70,9 +86,13 @@ const healthBeforeTurn = Object.fromEntries(
 state = nextTurn(state);
 assert.equal(state.boat.minor_power, 1);
 assert.equal(state.boat.major_power, 0);
+assert.equal(getBoatDelta(state, "turn"), 1);
+assert.equal(getBoatDelta(state, "minor_power"), 1);
 assert.ok(state.boat.turn > 1);
 assert.ok(state.boat.hull_damage > 0);
 assert.ok(state.boat.despair > 0);
+assert.ok(getBoatDelta(state, "hull_damage") > 0);
+assert.ok(getBoatDelta(state, "despair") > 0);
 assert.ok(state.boat.event_history.length > 0);
 assert.ok(
   state.characters.every((character) => character.health < healthBeforeTurn[character.id]),

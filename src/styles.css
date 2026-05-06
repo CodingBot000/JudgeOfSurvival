@@ -365,6 +365,9 @@ button:disabled {
   background: var(--panel-strong);
   color: #2d3a37;
   font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .power-buttons {
@@ -452,16 +455,34 @@ button:disabled {
 .stat-value {
   font-variant-numeric: tabular-nums;
   color: #1f2827;
+  display: inline-flex;
+  gap: 4px;
+  align-items: baseline;
+  white-space: nowrap;
 }
 
-.stat-value.up {
+.stat-value.up,
+.delta-value.up {
   color: var(--amber);
   font-weight: 800;
 }
 
-.stat-value.down {
+.stat-value.down,
+.delta-value.down {
   color: var(--teal);
   font-weight: 800;
+}
+
+.delta-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.metric-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
 }
 
 .character-flags {
