@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Anchor,
+  Bug,
   ChevronRight,
   CloudLightning,
   Coins,
@@ -18,6 +19,7 @@ import {
   Users,
   VolumeX,
   Waves,
+  X,
 } from "lucide-react";
 import {
   COMMAND_TYPES,
@@ -84,6 +86,7 @@ export default function App() {
   const scenario = DEFAULT_SCENARIO;
   const [game, setGame] = useState(() => createInitialState(scenario));
   const [screen, setScreen] = useState("trial");
+  const [debugOpen, setDebugOpen] = useState(false);
   const done = scenario.rules.isJudgementDone(game);
   const previousDone = useRef(done);
   const t = (key, params) => translate(game, key, params);
@@ -126,7 +129,7 @@ export default function App() {
   };
 
   return (
-    <div className="app-shell">
+    <div className={cx("app-shell", debugOpen && "debug-open")}>
       <header className="app-header">
         <div className="brand-lockup">
           <span className="brand-mark" aria-hidden="true">
@@ -138,21 +141,35 @@ export default function App() {
           </div>
         </div>
 
-        <label className="language-select">
-          <Languages size={18} aria-hidden="true" />
-          <span>{t("ui.status.language")}</span>
-          <select
-            aria-label={t("ui.status.language")}
-            value={game.language}
-            onChange={(event) => apply((current) => setLanguage(current, event.target.value))}
+        <div className="header-actions">
+          <button
+            id="debug-toggle-btn"
+            type="button"
+            className={cx("debug-toggle", debugOpen && "active")}
+            aria-controls="narrative-debug-panel"
+            aria-expanded={debugOpen}
+            onClick={() => setDebugOpen((current) => !current)}
           >
-            {languageOptions.map((option) => (
-              <option key={option.code} value={option.code}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            <Bug size={18} aria-hidden="true" />
+            <span>디버그</span>
+          </button>
+
+          <label className="language-select">
+            <Languages size={18} aria-hidden="true" />
+            <span>{t("ui.status.language")}</span>
+            <select
+              aria-label={t("ui.status.language")}
+              value={game.language}
+              onChange={(event) => apply((current) => setLanguage(current, event.target.value))}
+            >
+              {languageOptions.map((option) => (
+                <option key={option.code} value={option.code}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </header>
 
       <nav className="screen-tabs" aria-label="Screens">
@@ -172,6 +189,14 @@ export default function App() {
       </nav>
 
       <StatusStrip game={game} scenario={scenario} t={t} />
+
+      {debugOpen && (
+        <NarrativeDebugPanel
+          game={game}
+          scenario={scenario}
+          onClose={() => setDebugOpen(false)}
+        />
+      )}
 
       <main className="screen-frame">
         {screen === "trial" && (
@@ -217,6 +242,85 @@ export default function App() {
           <span>{t("ui.button.restart")}</span>
         </button>
       </footer>
+    </div>
+  );
+}
+
+function NarrativeDebugPanel({ game, scenario, onClose }) {
+  const entries = game.logs.slice(-6).map((entry, index) => ({
+    index: Math.max(0, game.logs.length - 6) + index + 1,
+    id: entry.id || entry.key,
+    type: entry.type || "legacy",
+    eventId: entry.eventId || "",
+    storyletId: entry.storyletId || "",
+    templateId: entry.templateId || "",
+    actorId: entry.actorId || "",
+    targetId: entry.targetId || "",
+    text: formatLogEntry(game, entry, scenario),
+  }));
+  const memory = game.narrativeMemory || {};
+
+  return (
+    <aside
+      id="narrative-debug-panel"
+      className="debug-panel"
+      aria-label="Narrative debug"
+    >
+      <header className="debug-panel-header">
+        <div>
+          <h2>내러티브 디버그</h2>
+          <p>최근 로그 6개의 storylet/template 추적</p>
+        </div>
+        <button type="button" className="debug-close" onClick={onClose} aria-label="디버그 닫기">
+          <X size={18} aria-hidden="true" />
+        </button>
+      </header>
+
+      <div className="debug-memory">
+        <DebugMemoryChip label="storylets" value={memory.recentStoryletIds?.length || 0} />
+        <DebugMemoryChip label="templates" value={memory.recentTemplateIds?.length || 0} />
+        <DebugMemoryChip label="phrases" value={memory.recentPhraseIds?.length || 0} />
+      </div>
+
+      <div className="debug-log-list">
+        {entries.length === 0 && <p className="debug-empty">기록 없음</p>}
+        {entries.map((entry) => (
+          <article className="debug-log-entry" key={`${entry.index}-${entry.id}`}>
+            <div className="debug-log-title">
+              <strong>#{entry.index}</strong>
+              <span className={cx("debug-type", entry.type === "narrative" && "narrative")}>
+                {entry.type}
+              </span>
+            </div>
+            <div className="debug-fields">
+              <DebugField label="id" value={entry.id} />
+              <DebugField label="event" value={entry.eventId} />
+              <DebugField label="storylet" value={entry.storyletId} />
+              <DebugField label="template" value={entry.templateId} />
+              <DebugField label="actor" value={entry.actorId} />
+              <DebugField label="target" value={entry.targetId} />
+            </div>
+            <p className="debug-rendered">{entry.text}</p>
+          </article>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
+function DebugMemoryChip({ label, value }) {
+  return (
+    <span className="debug-memory-chip">
+      {label} <strong>{value}</strong>
+    </span>
+  );
+}
+
+function DebugField({ label, value }) {
+  return (
+    <div className="debug-field">
+      <span>{label}</span>
+      <code>{value || "-"}</code>
     </div>
   );
 }

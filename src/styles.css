@@ -82,6 +82,13 @@ button:disabled {
   align-items: center;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
 .brand-lockup {
   display: flex;
   align-items: center;
@@ -156,6 +163,156 @@ button:disabled {
   color: #ffffff;
   border-color: var(--green-strong);
   background: var(--green-strong);
+}
+
+.debug-toggle.active {
+  color: #ffffff;
+  border-color: var(--teal);
+  background: var(--teal);
+}
+
+.debug-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  overflow: auto;
+  border: 0;
+  background: #ffffff;
+  color: #202426;
+}
+
+.debug-panel-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.debug-panel-header h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.debug-panel-header p {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.debug-close {
+  flex: 0 0 auto;
+  width: 42px;
+  padding: 0;
+}
+
+.debug-memory {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.debug-memory-chip {
+  display: inline-flex;
+  gap: 5px;
+  align-items: baseline;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  background: #f8faf7;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.debug-memory-chip strong {
+  color: #202426;
+}
+
+.debug-log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+}
+
+.debug-empty {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.debug-log-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+  background: #f8faf7;
+}
+
+.debug-log-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+.debug-type {
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: #eef1ed;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.debug-type.narrative {
+  color: #155b45;
+  background: #dff1e8;
+}
+
+.debug-fields {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.debug-field {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+  min-width: 0;
+  font-size: 12px;
+}
+
+.debug-field span {
+  color: var(--ink-soft);
+}
+
+.debug-field code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  border-radius: 6px;
+  padding: 3px 5px;
+  background: #eef5f0;
+  color: #25322f;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+}
+
+.debug-rendered {
+  margin: 0;
+  white-space: pre-line;
+  color: #33413e;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .status-strip {
@@ -587,6 +744,36 @@ button:disabled {
   }
 }
 
+@media (min-width: 900px) {
+  .app-shell.debug-open {
+    padding-right: 354px;
+  }
+
+  .debug-panel {
+    inset: 18px 18px 18px auto;
+    width: 320px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+  }
+}
+
+@media (max-width: 899px) {
+  .app-shell.debug-open {
+    height: 100dvh;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .app-shell.debug-open > :not(.debug-panel) {
+    display: none;
+  }
+
+  .app-shell.debug-open .debug-panel {
+    min-height: 100dvh;
+  }
+}
+
 @media (max-width: 760px) {
   .app-shell {
     padding: 12px;
@@ -595,6 +782,15 @@ button:disabled {
   .app-header {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .header-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .debug-toggle {
+    width: 100%;
   }
 
   .language-select {
