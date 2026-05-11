@@ -1,4 +1,4 @@
-import { LANGUAGE_CODES, TRANSLATIONS } from "../content/localization.js";
+import { COMMON_TRANSLATIONS, LANGUAGE_CODES } from "../content/localization.js";
 import { renderNarrativeLog } from "../survival-core/narrative/narrative-engine.js";
 import { isNarrativeLogEntry } from "../survival-core/narrative/semantic-log.js";
 import { getScenario } from "./scenario-registry.js";
@@ -16,10 +16,8 @@ export function translate(stateOrLanguage, textKey, params = {}) {
     typeof stateOrLanguage === "string"
       ? stateOrLanguage
       : stateOrLanguage?.language || "ko";
-  const primary = TRANSLATIONS[language] || TRANSLATIONS.ko;
-  const fallback = TRANSLATIONS.en;
-  const template = primary[textKey] || fallback[textKey] || textKey;
-  return applyParams(language, template, params);
+  const scenario = resolveScenarioForTranslation(stateOrLanguage);
+  return translateWithScenario(language, scenario, textKey, params);
 }
 
 export function getLanguageOptions(state) {
@@ -31,9 +29,16 @@ export function getLanguageOptions(state) {
 
 export function formatLogEntry(state, entry, scenario = getScenario(state.scenarioId)) {
   if (isNarrativeLogEntry(entry)) {
+    const scenarioTranslate = (stateOrLanguage, textKey, params = {}) => {
+      const language =
+        typeof stateOrLanguage === "string"
+          ? stateOrLanguage
+          : stateOrLanguage?.language || state.language || "ko";
+      return translateWithScenario(language, scenario, textKey, params);
+    };
     const rendered = renderNarrativeLog(state, scenario, entry, {
       language: state.language,
-      translate,
+      translate: scenarioTranslate,
     });
     if (rendered) {
       return rendered;
@@ -111,12 +116,37 @@ export function renderGameToText(state, screen = "trial", scenario = getScenario
   });
 }
 
-function applyParams(language, template, params) {
+function resolveScenarioForTranslation(stateOrLanguage) {
+  try {
+    if (typeof stateOrLanguage === "object" && stateOrLanguage?.scenarioId) {
+      return getScenario(stateOrLanguage.scenarioId);
+    }
+    return getScenario();
+  } catch {
+    return null;
+  }
+}
+
+function translateWithScenario(language, scenario, textKey, params = {}) {
+  const primaryScenario = scenario?.localization?.[language] || {};
+  const primaryCommon = COMMON_TRANSLATIONS[language] || COMMON_TRANSLATIONS.ko || {};
+  const fallbackScenario = scenario?.localization?.en || {};
+  const fallbackCommon = COMMON_TRANSLATIONS.en || {};
+  const template =
+    primaryScenario[textKey] ||
+    primaryCommon[textKey] ||
+    fallbackScenario[textKey] ||
+    fallbackCommon[textKey] ||
+    textKey;
+  return applyParams(language, scenario, template, params);
+}
+
+function applyParams(language, scenario, template, params) {
   let result = template;
   for (const [rawKey, rawValue] of Object.entries(params || {})) {
     const key = rawKey.endsWith("_key") ? rawKey.slice(0, -4) : rawKey;
     const value = rawKey.endsWith("_key")
-      ? translate(language, String(rawValue))
+      ? translateWithScenario(language, scenario, String(rawValue))
       : String(rawValue);
     result = result.replaceAll(`{${key}}`, value);
   }
