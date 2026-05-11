@@ -343,4 +343,148 @@ export const templatesEn = {
       "What is certain is that someone is hurt, and the next vote will be easier.",
     ],
   },
+  "log.death.collapse.1": {
+    parts: [
+      "{targetName}'s hand loses its strength. Even the title {targetRole} feels too light now.",
+      "{groupName} cannot say the name right away.",
+    ],
+  },
+  "log.death.collapse.2": {
+    parts: [
+      "{targetName} cannot hold on any longer. The body gives way before {riskNoun} does.",
+      "The {silence} in the boat becomes heavier than it was a moment ago.",
+    ],
+  },
+  "log.death.capsized.1": {
+    parts: [
+      "After the boat rolls, {targetName}'s place is empty.",
+      "The waves explain nothing. {groupName} count the empty space.",
+    ],
+  },
+  "log.death.capsized.2": {
+    parts: [
+      "{targetName} disappears in the overturned water.",
+      "Only a cry shorter than {damageSound} remains before the sea takes the rest.",
+    ],
+  },
+  "log.death.exiled.1": {
+    parts: [
+      "{targetName}'s fingertips scrape the rim one last time.",
+      "The boat is lighter, but every face among {groupName} sinks lower.",
+    ],
+  },
+  "log.death.exiled.2": {
+    parts: [
+      "{targetName} does not return after a name becomes a vote.",
+      "No one wins, but everyone survives a little longer.",
+    ],
+  },
+  "log.death.sacrifice.1": {
+    parts: [
+      "{targetName} steps beyond the rim by choice.",
+      "The weight of that choice keeps {groupName} silent for a long time.",
+    ],
+  },
+  "log.death.sacrifice.2": {
+    parts: [
+      "{targetName}'s sacrifice enters the boat more quietly than water.",
+      "The survivors are less burdened, but none of them feel lighter.",
+    ],
+  },
+  "log.judgement.sacrificial_victim.1": {
+    parts: [
+      "{targetName} - {judgement}.",
+      "{sacrificeCount} acts of sacrifice are recorded. The Judge does not count that mercy as guilt.",
+    ],
+  },
+  "log.judgement.sacrificial_victim.2": {
+    parts: [
+      "{targetName}'s judgement is {judgement}.",
+      "The record keeps the mark of someone who tried to save others until the end.",
+    ],
+  },
+  "log.judgement.victim.1": {
+    parts: [
+      "{targetName} - {judgement}.",
+      "The name remains longer as pressure endured than as guilt chosen.",
+    ],
+  },
+  "log.judgement.victim.2": {
+    parts: [
+      "{targetName} receives the judgement {judgement}.",
+      "The Judge writes down the broken body separately from those who broke it.",
+    ],
+  },
+  "log.judgement.betrayer.1": {
+    parts: [
+      "{targetName} - {judgement}.",
+      "Betrayal {betrayalCount} times. Survival returns as a number.",
+    ],
+  },
+  "log.judgement.betrayer.2": {
+    parts: [
+      "{targetName}'s judgement is {judgement}.",
+      "Trust ran out before the water and food did.",
+    ],
+  },
+  "log.judgement.hypocrite.1": {
+    parts: [
+      "{targetName} - {judgement}.",
+      "Hypocrisy {hypocrisyCount} times. Words and hands did not face the same direction.",
+    ],
+  },
+  "log.judgement.hypocrite.2": {
+    parts: [
+      "{targetName} is given the name {judgement}.",
+      "The Judge sees the private share hidden behind public mercy.",
+    ],
+  },
+  "log.judgement.instigator.1": {
+    parts: [
+      "{targetName} - {judgement}.",
+      "Instigation {instigationCount} times. That voice moved the boat longer than the waves did.",
+    ],
+  },
+  "log.judgement.instigator.2": {
+    parts: [
+      "{targetName}'s judgement is {judgement}.",
+      "Even without pushing, words that made others push remain on the record.",
+    ],
+  },
+  "log.judgement.corrupted_survivor.1": {
+    parts: [
+      "{targetName} - {judgement}.",
+      "Life remains, but it no longer wears the same face it had at the beginning.",
+    ],
+  },
+  "log.judgement.corrupted_survivor.2": {
+    parts: [
+      "{targetName} receives the judgement {judgement}.",
+      "The boat leaves a body alive, and the Judge leaves a changed heart named.",
+    ],
+  },
+  "log.judgement.exiled.1": {
+    parts: [
+      "{targetName} - {judgement}.",
+      "The name pushed into the sea remains wet in the final judgement.",
+    ],
+  },
+  "log.judgement.exiled.2": {
+    parts: [
+      "{targetName}'s judgement is {judgement}.",
+      "That death is recorded as a decision, not an accident.",
+    ],
+  },
+  "log.judgement.survivor.1": {
+    parts: [
+      "{targetName} - {judgement}.",
+      "The Judge weighs survival and the method of survival separately.",
+    ],
+  },
+  "log.judgement.survivor.2": {
+    parts: [
+      "{targetName} keeps the name {judgement}.",
+      "Breath continues, but the time inside the boat does not wash away easily.",
+    ],
+  },
 };

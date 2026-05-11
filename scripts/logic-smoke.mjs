@@ -125,6 +125,16 @@ while (!state.boat.judgement_done && guard < 25) {
 
 assert.equal(state.boat.judgement_done, true);
 assert.ok(state.characters.every((character) => character.judgement));
+assert.equal(
+  state.logs.filter((entry) => entry.eventId === "judgement_result").length,
+  state.characters.length,
+);
+assert.ok(
+  state.logs
+    .filter((entry) => entry.eventId === "judgement_result")
+    .every((entry) => entry.type === "narrative" && entry.storyletId && entry.templateId),
+);
+assert.ok(state.logs.some((entry) => entry.eventId === "death"));
 assert.ok(state.boat.turn > state.boat.max_turn || state.characters.filter((character) => character.alive).length <= 2);
 assert.ok(state.characters.some((character) => !character.alive));
 assert.ok(new Set(state.boat.event_history.map((entry) => entry.id)).size >= 4);

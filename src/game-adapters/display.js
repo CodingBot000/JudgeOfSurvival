@@ -99,6 +99,15 @@ export function renderGameToText(state, screen = "trial", scenario = getScenario
     recent_logs: state.logs
       .slice(-6)
       .map((entry) => formatLogEntry(state, entry, scenario)),
+    recent_log_debug: state.logs.slice(-6).map((entry) => ({
+      id: entry.id || entry.key,
+      type: entry.type || "legacy",
+      eventId: entry.eventId || "",
+      storyletId: entry.storyletId || "",
+      templateId: entry.templateId || "",
+      actorId: entry.actorId || "",
+      targetId: entry.targetId || "",
+    })),
   });
 }
 

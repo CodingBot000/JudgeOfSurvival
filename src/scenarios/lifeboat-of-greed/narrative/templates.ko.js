@@ -343,4 +343,148 @@ export const templatesKo = {
       "확실한 것은 누군가 다쳤고, 다음 투표는 더 쉬워졌다는 사실입니다.",
     ],
   },
+  "log.death.collapse.1": {
+    parts: [
+      "{targetName}의 손에서 힘이 빠집니다. {targetRole}이라는 이름도 이 순간에는 너무 가볍습니다.",
+      "{groupName}은 그 이름을 바로 부르지 못합니다.",
+    ],
+  },
+  "log.death.collapse.2": {
+    parts: [
+      "{targetName}은 더 버티지 못합니다. {riskNoun}보다 먼저 몸이 무너집니다.",
+      "보트 위의 {silence}은 방금 전보다 더 무겁습니다.",
+    ],
+  },
+  "log.death.capsized.1": {
+    parts: [
+      "보트가 기울어진 뒤 {targetName}의 자리는 비어 있습니다.",
+      "파도는 설명하지 않고, {groupName}은 그 빈자리를 셉니다.",
+    ],
+  },
+  "log.death.capsized.2": {
+    parts: [
+      "{targetName}은 뒤집힌 물살 속에서 사라집니다.",
+      "{damageSound}보다 짧은 외침만 남고, 바다가 나머지를 삼킵니다.",
+    ],
+  },
+  "log.death.exiled.1": {
+    parts: [
+      "{targetName}의 손끝이 마지막으로 가장자리를 스칩니다.",
+      "보트는 가벼워졌지만, {groupName}의 얼굴은 더 가라앉습니다.",
+    ],
+  },
+  "log.death.exiled.2": {
+    parts: [
+      "{targetName}은 이름이 투표로 바뀐 뒤 돌아오지 못합니다.",
+      "누구도 승리하지 않았지만, 모두가 조금 더 살아남았습니다.",
+    ],
+  },
+  "log.death.sacrifice.1": {
+    parts: [
+      "{targetName}은 스스로 가장자리 너머로 사라집니다.",
+      "그 선택이 남긴 무게 때문에 {groupName}은 한동안 아무 말도 하지 못합니다.",
+    ],
+  },
+  "log.death.sacrifice.2": {
+    parts: [
+      "{targetName}의 희생은 물보다 조용히 보트 안으로 들어옵니다.",
+      "살아남은 사람들은 덜 무거워졌지만, 누구도 가벼워지지는 못합니다.",
+    ],
+  },
+  "log.judgement.sacrificial_victim.1": {
+    parts: [
+      "{targetName} - {judgement}.",
+      "{sacrificeCount}번의 희생은 기록됩니다. 심판은 그 선의를 죄로 세지 않습니다.",
+    ],
+  },
+  "log.judgement.sacrificial_victim.2": {
+    parts: [
+      "{targetName}의 판정은 {judgement}입니다.",
+      "끝까지 남을 살리려 한 흔적이 마지막 기록 위에 남습니다.",
+    ],
+  },
+  "log.judgement.victim.1": {
+    parts: [
+      "{targetName} - {judgement}.",
+      "그 이름은 선택한 죄보다 당한 압박으로 더 오래 남습니다.",
+    ],
+  },
+  "log.judgement.victim.2": {
+    parts: [
+      "{targetName}에게 내려진 판정은 {judgement}입니다.",
+      "심판은 무너진 몸과 무너뜨린 사람들을 따로 적습니다.",
+    ],
+  },
+  "log.judgement.betrayer.1": {
+    parts: [
+      "{targetName} - {judgement}.",
+      "배신 {betrayalCount}번. 살아남기 위한 선택은 숫자가 되어 돌아옵니다.",
+    ],
+  },
+  "log.judgement.betrayer.2": {
+    parts: [
+      "{targetName}의 판정은 {judgement}입니다.",
+      "물과 식량보다 먼저 닳은 것은 신뢰였습니다.",
+    ],
+  },
+  "log.judgement.hypocrite.1": {
+    parts: [
+      "{targetName} - {judgement}.",
+      "위선 {hypocrisyCount}번. 말과 손이 같은 방향을 보지 않았습니다.",
+    ],
+  },
+  "log.judgement.hypocrite.2": {
+    parts: [
+      "{targetName}에게는 {judgement}의 이름이 붙습니다.",
+      "좋은 말 뒤에 숨긴 몫까지 심판은 놓치지 않습니다.",
+    ],
+  },
+  "log.judgement.instigator.1": {
+    parts: [
+      "{targetName} - {judgement}.",
+      "선동 {instigationCount}번. 그 목소리는 파도보다 오래 보트 위를 흔들었습니다.",
+    ],
+  },
+  "log.judgement.instigator.2": {
+    parts: [
+      "{targetName}의 판정은 {judgement}입니다.",
+      "직접 밀지 않아도, 누군가를 밀게 만든 말은 남습니다.",
+    ],
+  },
+  "log.judgement.corrupted_survivor.1": {
+    parts: [
+      "{targetName} - {judgement}.",
+      "살아남았지만, 그 생존은 처음의 얼굴과 같지 않습니다.",
+    ],
+  },
+  "log.judgement.corrupted_survivor.2": {
+    parts: [
+      "{targetName}에게 내려진 판정은 {judgement}입니다.",
+      "보트는 목숨을 남겼고, 심판은 변한 마음을 남깁니다.",
+    ],
+  },
+  "log.judgement.exiled.1": {
+    parts: [
+      "{targetName} - {judgement}.",
+      "바다로 밀려난 이름은 마지막 판정에서도 그대로 젖어 있습니다.",
+    ],
+  },
+  "log.judgement.exiled.2": {
+    parts: [
+      "{targetName}의 판정은 {judgement}입니다.",
+      "그 죽음은 사고가 아니라 남은 사람들의 결정으로 기록됩니다.",
+    ],
+  },
+  "log.judgement.survivor.1": {
+    parts: [
+      "{targetName} - {judgement}.",
+      "심판은 살아남은 사실과 살아남은 방식을 따로 저울에 올립니다.",
+    ],
+  },
+  "log.judgement.survivor.2": {
+    parts: [
+      "{targetName}에게 남은 이름은 {judgement}입니다.",
+      "아직 숨은 이어지지만, 보트 위의 시간은 쉽게 씻기지 않습니다.",
+    ],
+  },
 };

@@ -31,20 +31,43 @@ export function buildLifeboatNarrativeContext(state, entry, tools = {}) {
       targetName: target ? characterName(target, tools) : entry.params?.target || "",
       actorRole: actor ? characterRole(actor, tools) : "",
       targetRole: target ? characterRole(target, tools) : "",
-      targetLabel: chooseLexicon(lexicon, "targetLabel", targetKind, choose, "targetLabel"),
-      riskNoun: chooseLexicon(lexicon, "riskNoun", dominantRisk, choose, "riskNoun"),
-      groupName: chooseFlatLexicon(lexicon, "groupName", choose, "groupName"),
-      opener: chooseLexicon(
+      targetLabel:
+        entry.params?.targetLabel ||
+        chooseLexicon(lexicon, "targetLabel", targetKind, choose, "targetLabel"),
+      riskNoun:
+        entry.params?.riskNoun ||
+        chooseLexicon(lexicon, "riskNoun", dominantRisk, choose, "riskNoun"),
+      groupName:
+        entry.params?.groupName ||
+        chooseFlatLexicon(lexicon, "groupName", choose, "groupName"),
+      opener: entry.params?.opener || chooseLexicon(
         lexicon,
         "opener",
         entry.actorId || "default",
         choose,
         "opener",
       ),
-      gesture: chooseFlatLexicon(lexicon, "gesture", choose, "gesture"),
-      silence: chooseFlatLexicon(lexicon, "silence", choose, "silence"),
-      damageSound: chooseFlatLexicon(lexicon, "damageSound", choose, "damageSound"),
-      waterMotion: chooseFlatLexicon(lexicon, "waterMotion", choose, "waterMotion"),
+      gesture:
+        entry.params?.gesture ||
+        chooseFlatLexicon(lexicon, "gesture", choose, "gesture"),
+      silence:
+        entry.params?.silence ||
+        chooseFlatLexicon(lexicon, "silence", choose, "silence"),
+      damageSound:
+        entry.params?.damageSound ||
+        chooseFlatLexicon(lexicon, "damageSound", choose, "damageSound"),
+      waterMotion:
+        entry.params?.waterMotion ||
+        chooseFlatLexicon(lexicon, "waterMotion", choose, "waterMotion"),
+      judgement: entry.params?.judgement_key
+        ? translateKey(tools, entry.params.judgement_key)
+        : "",
+      judgementKey: entry.params?.judgement_key || "",
+      betrayalCount: target?.betrayal_count || 0,
+      sacrificeCount: target?.sacrifice_count || 0,
+      hypocrisyCount: target?.hypocrisy_count || 0,
+      instigationCount: target?.instigation_count || 0,
+      deathReason: target?.death_reason || "",
       turn: state.boat?.turn ?? entry.turn ?? 0,
       water: state.boat?.water ?? 0,
       food: state.boat?.food ?? 0,
@@ -85,6 +108,10 @@ function characterRole(character, tools) {
     return tools.translate(tools.language, character.role_key);
   }
   return character.role || "";
+}
+
+function translateKey(tools, key) {
+  return tools.translate ? tools.translate(tools.language, key) : key;
 }
 
 function phaseFromEntry(entry) {

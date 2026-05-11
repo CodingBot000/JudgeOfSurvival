@@ -156,4 +156,93 @@ export const storylets = [
   ], {
     phases: ["fracture", "collapse"],
   }),
+  storylet("log.death.exiled", "death", "death", [
+    "log.death.exiled.1",
+    "log.death.exiled.2",
+  ], {
+    tags: ["death", "exiled"],
+    canUse: (context) => context.target?.death_reason === "exiled",
+  }),
+  storylet("log.death.sacrifice", "death", "death", [
+    "log.death.sacrifice.1",
+    "log.death.sacrifice.2",
+  ], {
+    tags: ["death", "sacrifice"],
+    canUse: (context) => context.target?.death_reason === "sacrifice",
+  }),
+  storylet("log.death.capsized", "death", "death", [
+    "log.death.capsized.1",
+    "log.death.capsized.2",
+  ], {
+    tags: ["death", "capsized"],
+    canUse: (context) => context.target?.death_reason === "capsized",
+  }),
+  storylet("log.death.collapse", "death", "death", [
+    "log.death.collapse.1",
+    "log.death.collapse.2",
+  ], {
+    tags: ["death", "collapse"],
+    canUse: (context) =>
+      !["exiled", "sacrifice", "capsized"].includes(
+        context.target?.death_reason,
+      ),
+  }),
+  storylet("log.judgement.sacrificial_victim", "judgement_result", "judge", [
+    "log.judgement.sacrificial_victim.1",
+    "log.judgement.sacrificial_victim.2",
+  ], {
+    tags: ["judgement"],
+    canUse: (context) =>
+      context.tokens?.judgementKey === "judgement.sacrificial_victim",
+  }),
+  storylet("log.judgement.exiled", "judgement_result", "judge", [
+    "log.judgement.exiled.1",
+    "log.judgement.exiled.2",
+  ], {
+    tags: ["judgement"],
+    canUse: (context) => context.tokens?.judgementKey === "judgement.exiled",
+  }),
+  storylet("log.judgement.betrayer", "judgement_result", "judge", [
+    "log.judgement.betrayer.1",
+    "log.judgement.betrayer.2",
+  ], {
+    tags: ["judgement"],
+    canUse: (context) => context.tokens?.judgementKey === "judgement.betrayer",
+  }),
+  storylet("log.judgement.hypocrite", "judgement_result", "judge", [
+    "log.judgement.hypocrite.1",
+    "log.judgement.hypocrite.2",
+  ], {
+    tags: ["judgement"],
+    canUse: (context) => context.tokens?.judgementKey === "judgement.hypocrite",
+  }),
+  storylet("log.judgement.instigator", "judgement_result", "judge", [
+    "log.judgement.instigator.1",
+    "log.judgement.instigator.2",
+  ], {
+    tags: ["judgement"],
+    canUse: (context) => context.tokens?.judgementKey === "judgement.instigator",
+  }),
+  storylet("log.judgement.corrupted_survivor", "judgement_result", "judge", [
+    "log.judgement.corrupted_survivor.1",
+    "log.judgement.corrupted_survivor.2",
+  ], {
+    tags: ["judgement"],
+    canUse: (context) =>
+      context.tokens?.judgementKey === "judgement.corrupted_survivor",
+  }),
+  storylet("log.judgement.victim", "judgement_result", "judge", [
+    "log.judgement.victim.1",
+    "log.judgement.victim.2",
+  ], {
+    tags: ["judgement"],
+    canUse: (context) => context.tokens?.judgementKey === "judgement.victim",
+  }),
+  storylet("log.judgement.survivor", "judgement_result", "judge", [
+    "log.judgement.survivor.1",
+    "log.judgement.survivor.2",
+  ], {
+    tags: ["judgement"],
+    canUse: (context) => context.tokens?.judgementKey === "judgement.survivor",
+  }),
 ];

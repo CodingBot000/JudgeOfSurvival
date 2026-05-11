@@ -8,7 +8,11 @@ import {
 } from "./state.js";
 import { runWeightedEventMut } from "../../survival-core/event-runner.js";
 import { createNarrativeLogEntry } from "../../survival-core/narrative/semantic-log.js";
-import { rememberNarrativeVariantMut } from "../../survival-core/narrative/repetition-memory.js";
+import {
+  ensureNarrativeMemoryMut,
+  pickPhraseWithMemory,
+  rememberNarrativeVariantMut,
+} from "../../survival-core/narrative/repetition-memory.js";
 import { selectNarrativeVariant } from "../../survival-core/narrative/storylet-runner.js";
 import { addAllianceMut, addEnemyMut } from "../../survival-core/relationships.js";
 import { randomFloatMut, randomFromMut } from "../../survival-core/rng.js";
@@ -42,6 +46,7 @@ export function createInitialState(metadata = {}) {
       recentTemplateIds: [],
       recentSpeakerIds: [],
       recentIntentIds: [],
+      recentPhraseIds: [],
     },
     boatStatDeltas: {},
     characterStatDeltas: {},
@@ -342,11 +347,36 @@ function addNarrativeLogMut(state, input) {
   const variant = selectNarrativeVariant(state, narrative, context);
   entry.storyletId = variant.storyletId;
   entry.templateId = variant.templateId;
+  freezePhraseChoicesMut(state, entry);
   state.logs.push(entry);
   rememberNarrativeVariantMut(state, entry);
   if (state.logs.length > LOG_LIMIT) {
     state.logs.splice(0, state.logs.length - LOG_LIMIT);
   }
+}
+
+function freezePhraseChoicesMut(state, entry) {
+  const memory = ensureNarrativeMemoryMut(state);
+  const lexicon = narrative.lexicon?.[state.language] || narrative.lexicon?.ko || {};
+  const phraseIds = new Set();
+  const phraseChoices = {};
+  const choose = (items, salt) => {
+    const selected = pickPhraseWithMemory(items, entry.variantSeed, salt, memory);
+    if (selected) {
+      phraseIds.add(selected.id);
+      phraseChoices[salt] = selected.index;
+    }
+    return selected?.text || "";
+  };
+
+  narrative.buildContext(state, entry, {
+    language: state.language,
+    choose,
+    lexicon,
+  });
+
+  entry.phraseIds = [...phraseIds];
+  entry.phraseChoices = phraseChoices;
 }
 
 function snapshotCharacterStats(state) {
@@ -491,9 +521,28 @@ function checkDeathsMut(state) {
       character.alive = false;
       character.health = 0;
       character.death_reason ||= "collapse";
-      addLogMut(state, "log.death", nameParams(character));
+      addDeathLogMut(state, character);
     }
   }
+}
+
+function addDeathLogMut(state, character) {
+  if (!character || character.death_log_recorded) {
+    return;
+  }
+  character.death_log_recorded = true;
+  addNarrativeLogMut(state, {
+    id: "log.death",
+    eventId: "death",
+    intent: "death",
+    target: character,
+    params: nameParams(character),
+    tags: [
+      "death",
+      character.death_reason || "collapse",
+      phaseForTurn(state.boat.turn),
+    ],
+  });
 }
 
 function checkEndConditionsMut(state, clearFinishDeltas = true) {
@@ -533,6 +582,7 @@ function checkEndConditionsMut(state, clearFinishDeltas = true) {
           params: actorTargetParams(actor, target),
           tags: ["social", "exile", phaseForTurn(state.boat.turn)],
         });
+        addDeathLogMut(state, target);
       }
     }
     addLogMut(state, "log.max_turn_passed");
@@ -565,9 +615,20 @@ function finishChapterMut(state, clearDeltas = true) {
   }
   addLogMut(state, "log.final_judgement_header");
   for (const character of state.characters) {
-    addLogMut(state, "log.judgement_result", {
-      name_key: character.name_key,
-      judgement_key: character.judgement || "judgement.unjudged",
+    addNarrativeLogMut(state, {
+      id: "log.judgement_result",
+      eventId: "judgement_result",
+      intent: "judge",
+      target: character,
+      params: {
+        name_key: character.name_key,
+        judgement_key: character.judgement || "judgement.unjudged",
+      },
+      tags: [
+        "judgement",
+        character.judgement || "judgement.unjudged",
+        character.alive ? "alive" : "dead",
+      ],
     });
   }
 }
@@ -1276,6 +1337,7 @@ function eventExileVoteMut(state) {
       params: actorTargetParams(actor, target),
       tags: ["social", "exile", phaseForTurn(state.boat.turn)],
     });
+    addDeathLogMut(state, target);
   } else {
     target.trust -= 15;
     target.fear += 15;
@@ -1351,6 +1413,7 @@ function eventVoluntarySacrificeNewMut(state) {
     params: { target_key: target.name_key },
     tags: ["social", "sacrifice", phaseForTurn(state.boat.turn)],
   });
+  addDeathLogMut(state, target);
   return { target };
 }
 

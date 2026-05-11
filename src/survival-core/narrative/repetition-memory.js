@@ -1,3 +1,5 @@
+import { hashString, weightedPickFromSeed } from "./seeded-choice.js";
+
 const MEMORY_LIMIT = 12;
 
 export function createNarrativeMemory() {
@@ -6,6 +8,7 @@ export function createNarrativeMemory() {
     recentTemplateIds: [],
     recentSpeakerIds: [],
     recentIntentIds: [],
+    recentPhraseIds: [],
   };
 }
 
@@ -15,6 +18,7 @@ export function ensureNarrativeMemoryMut(state) {
   state.narrativeMemory.recentTemplateIds ||= [];
   state.narrativeMemory.recentSpeakerIds ||= [];
   state.narrativeMemory.recentIntentIds ||= [];
+  state.narrativeMemory.recentPhraseIds ||= [];
   return state.narrativeMemory;
 }
 
@@ -24,6 +28,9 @@ export function rememberNarrativeVariantMut(state, entry) {
   remember(memory.recentTemplateIds, entry.templateId);
   remember(memory.recentSpeakerIds, entry.actorId);
   remember(memory.recentIntentIds, entry.intent);
+  for (const phraseId of entry.phraseIds || []) {
+    remember(memory.recentPhraseIds, phraseId);
+  }
 }
 
 export function memoryPenalty(memory, fieldName, value, penalty) {
@@ -37,6 +44,27 @@ export function memoryPenalty(memory, fieldName, value, penalty) {
   }
   const recency = recentValues.length - latestIndex;
   return Math.max(1, penalty - recency + 1);
+}
+
+export function pickPhraseWithMemory(items, seed, salt, memory) {
+  const weightedItems = (items || []).map((rawItem) => {
+    const index = items.indexOf(rawItem);
+    const text = typeof rawItem === "string" ? rawItem : rawItem?.text || "";
+    const id =
+      typeof rawItem === "string"
+        ? phraseIdFor(text)
+        : rawItem?.id || phraseIdFor(text);
+    return {
+      value: { id, text, index },
+      weight: Math.max(1, 10 - memoryPenalty(memory, "recentPhraseIds", id, 8)),
+    };
+  });
+
+  return weightedPickFromSeed(weightedItems, seed, salt);
+}
+
+export function phraseIdFor(text) {
+  return `phrase:${hashString(text).toString(36)}`;
 }
 
 function remember(list, value) {

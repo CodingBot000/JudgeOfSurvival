@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Anchor,
   ChevronRight,
@@ -85,6 +85,7 @@ export default function App() {
   const [game, setGame] = useState(() => createInitialState(scenario));
   const [screen, setScreen] = useState("trial");
   const done = scenario.rules.isJudgementDone(game);
+  const previousDone = useRef(done);
   const t = (key, params) => translate(game, key, params);
 
   useEffect(() => {
@@ -93,10 +94,11 @@ export default function App() {
   }, [game.language]);
 
   useEffect(() => {
-    if (done && screen !== "judgement") {
+    if (done && !previousDone.current) {
       setScreen("judgement");
     }
-  }, [done, screen]);
+    previousDone.current = done;
+  }, [done]);
 
   useEffect(() => {
     const renderText = () => renderGameToText(game, screen, scenario);

@@ -19,7 +19,14 @@ export function renderNarrativeLog(state, scenario, entry, tools = {}) {
 
   const lexicon =
     narrative.lexicon?.[language] || narrative.lexicon?.ko || narrative.lexicon?.en || {};
-  const choose = (items, salt) => pickFromSeed(items, entry.variantSeed, salt);
+  const choose = (items, salt) => {
+    const choiceIndex = entry.phraseChoices?.[salt];
+    if (Number.isInteger(choiceIndex) && items?.length) {
+      const item = items[choiceIndex % items.length];
+      return typeof item === "string" ? item : item?.text || "";
+    }
+    return pickFromSeed(items, entry.variantSeed, salt);
+  };
   const context = buildNarrativeContext(state, scenario, entry, {
     ...tools,
     choose,
