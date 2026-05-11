@@ -1,0 +1,38 @@
+export const lexiconEn = {
+  groupName: ["the others", "the survivors", "everyone in the boat"],
+  riskNoun: {
+    water: ["the water supply", "the last bottles", "the shared water"],
+    food: ["the emergency food", "the remaining food", "the supplies"],
+    load: ["the weight", "the load", "the sinking line"],
+    damage: ["the crack", "the damaged hull", "the splitting seam"],
+    ingress: ["the rising water", "the leak", "the water at their feet"],
+    storm: ["the storm", "the waves", "the broken horizon"],
+    despair: ["the fear", "the despair", "the broken silence"],
+    default: ["the danger", "the pressure", "the bad omen"],
+  },
+  targetLabel: {
+    weak: ["the weakest person here", "the one who can barely hold on", "the burden"],
+    greedy: ["the one counting supplies", "the one guarding their own share", "the hoarder"],
+    distrusted: ["the one no one trusts", "the one avoiding every gaze", "the suspect"],
+    influential: ["the loudest voice here", "the one moving the room", "the one steering fear"],
+    default: ["that person", "the named one", "the one everyone is watching"],
+  },
+  opener: {
+    chairman: ["Coldly speaking", "Count the numbers", "Put sentiment aside"],
+    nurse: ["Do not say it like that", "We cannot turn people into numbers yet", "We are crossing a line"],
+    soldier: ["Quiet", "Hold order", "This needs command"],
+    influencer: ["I hate saying this", "Everyone feels it", "I am not trying to blame anyone"],
+    elder: ["I have lived a long time", "My breath is getting short", "If I am the reason"],
+    stowaway: ["I did not steal anything", "So it is my turn again?", "Do not look at me like that"],
+    default: ["Listen", "This has to be said", "We cannot hide it anymore"],
+  },
+  gesture: [
+    "grips the wet rim",
+    "lowers their body on the shifting floor",
+    "clutches at a soaked collar",
+    "keeps still while everyone watches everyone else",
+  ],
+  silence: ["silence", "breathing", "a short pause", "lowered eyes"],
+  damageSound: ["a dry crack", "a dull snap", "the sound of wood twisting"],
+  waterMotion: ["seeps in", "pushes across their feet", "rises by a slow inch"],
+};

@@ -7,6 +7,9 @@ import {
   TRACKED_STAT_DELTAS,
 } from "./state.js";
 import { runWeightedEventMut } from "../../survival-core/event-runner.js";
+import { createNarrativeLogEntry } from "../../survival-core/narrative/semantic-log.js";
+import { rememberNarrativeVariantMut } from "../../survival-core/narrative/repetition-memory.js";
+import { selectNarrativeVariant } from "../../survival-core/narrative/storylet-runner.js";
 import { addAllianceMut, addEnemyMut } from "../../survival-core/relationships.js";
 import { randomFloatMut, randomFromMut } from "../../survival-core/rng.js";
 import {
@@ -17,6 +20,7 @@ import {
   highestFrom,
   lowestFrom,
 } from "../../survival-core/selectors.js";
+import { narrative } from "./narrative/index.js";
 
 const INITIAL_SEED = 927413;
 const MAX_EVENT_HISTORY = 24;
@@ -33,6 +37,12 @@ export function createInitialState(metadata = {}) {
     boat: clone(DEFAULT_BOAT_STATE),
     characters: clone(DEFAULT_CHARACTERS),
     logs: [],
+    narrativeMemory: {
+      recentStoryletIds: [],
+      recentTemplateIds: [],
+      recentSpeakerIds: [],
+      recentIntentIds: [],
+    },
     boatStatDeltas: {},
     characterStatDeltas: {},
     rngSeed: Number.isFinite(seed) ? seed : INITIAL_SEED,
@@ -94,7 +104,14 @@ export function useMinorPower(state, powerId) {
       target.fear += 5;
       target.trust -= 2;
       target.accusation_score += 2;
-      addLogMut(next, "log.minor_whisper_fear", nameParams(target));
+      addNarrativeLogMut(next, {
+        id: "log.minor_whisper_fear",
+        eventId: "minor_whisper_fear",
+        intent: "fear",
+        target,
+        params: nameParams(target),
+        tags: ["power", "minor", "fear", phaseForTurn(next.boat.turn)],
+      });
     }
   }
 
@@ -104,7 +121,14 @@ export function useMinorPower(state, powerId) {
       target.greed += 5;
       target.morality -= 2;
       target.accusation_score += 2;
-      addLogMut(next, "log.minor_nudge_greed", nameParams(target));
+      addNarrativeLogMut(next, {
+        id: "log.minor_nudge_greed",
+        eventId: "minor_nudge_greed",
+        intent: "greed",
+        target,
+        params: nameParams(target),
+        tags: ["power", "minor", "greed", phaseForTurn(next.boat.turn)],
+      });
     }
   }
 
@@ -118,7 +142,14 @@ export function useMinorPower(state, powerId) {
           character.trust -= 1;
         }
       }
-      addLogMut(next, "log.minor_seed_doubt", nameParams(target));
+      addNarrativeLogMut(next, {
+        id: "log.minor_seed_doubt",
+        eventId: "minor_seed_doubt",
+        intent: "seed_doubt",
+        target,
+        params: nameParams(target),
+        tags: ["power", "minor", "doubt", phaseForTurn(next.boat.turn)],
+      });
     }
   }
 
@@ -129,7 +160,12 @@ export function useMinorPower(state, powerId) {
     }
     next.boat.rescue_chance = Math.max(0, next.boat.rescue_chance - 3);
     next.boat.despair = Math.max(0, next.boat.despair - 1);
-    addLogMut(next, "log.minor_false_comfort");
+    addNarrativeLogMut(next, {
+      id: "log.minor_false_comfort",
+      eventId: "minor_false_comfort",
+      intent: "false_hope",
+      tags: ["power", "minor", "hope", phaseForTurn(next.boat.turn)],
+    });
   }
 
   if (powerId === "heavy_silence") {
@@ -138,7 +174,12 @@ export function useMinorPower(state, powerId) {
       character.morality -= 1;
     }
     next.boat.despair += 1;
-    addLogMut(next, "log.minor_heavy_silence");
+    addNarrativeLogMut(next, {
+      id: "log.minor_heavy_silence",
+      eventId: "minor_heavy_silence",
+      intent: "silence",
+      tags: ["power", "minor", "silence", phaseForTurn(next.boat.turn)],
+    });
   }
 
   postPlayerActionMut(next, beforeStats, beforeBoatStats);
@@ -163,7 +204,12 @@ export function useMajorPower(state, powerId) {
       }
     }
     next.boat.despair += 1;
-    addLogMut(next, "log.power_reduce_water");
+    addNarrativeLogMut(next, {
+      id: "log.power_reduce_water",
+      eventId: "power_reduce_water",
+      intent: "judge_pressure",
+      tags: ["power", "major", "water", phaseForTurn(next.boat.turn)],
+    });
   }
 
   if (powerId === "rumor") {
@@ -182,7 +228,14 @@ export function useMajorPower(state, powerId) {
     if (instigator) {
       instigator.instigation_count += 1;
     }
-    addLogMut(next, "log.power_rumor");
+    addNarrativeLogMut(next, {
+      id: "log.power_rumor",
+      eventId: "power_rumor",
+      intent: "seed_doubt",
+      target,
+      params: target ? nameParams(target) : {},
+      tags: ["power", "major", "doubt", phaseForTurn(next.boat.turn)],
+    });
   }
 
   if (powerId === "hidden_food") {
@@ -193,7 +246,14 @@ export function useMajorPower(state, powerId) {
       target.hypocrisy_count += 1;
       target.accusation_score += 6;
     }
-    addLogMut(next, "log.power_hidden_food");
+    addNarrativeLogMut(next, {
+      id: "log.power_hidden_food",
+      eventId: "power_hidden_food",
+      intent: "tempt",
+      target,
+      params: target ? nameParams(target) : {},
+      tags: ["power", "major", "food", phaseForTurn(next.boat.turn)],
+    });
   }
 
   if (powerId === "storm") {
@@ -208,7 +268,12 @@ export function useMajorPower(state, powerId) {
         character.health -= 5;
       }
     }
-    addLogMut(next, "log.power_storm");
+    addNarrativeLogMut(next, {
+      id: "log.power_storm",
+      eventId: "power_storm",
+      intent: "environment_pressure",
+      tags: ["power", "major", "storm", phaseForTurn(next.boat.turn)],
+    });
   }
 
   postPlayerActionMut(next, beforeStats, beforeBoatStats);
@@ -261,6 +326,24 @@ export function requestFinishChapter(state) {
 
 function addLogMut(state, key, params = {}) {
   state.logs.push({ key, params: { ...params } });
+  if (state.logs.length > LOG_LIMIT) {
+    state.logs.splice(0, state.logs.length - LOG_LIMIT);
+  }
+}
+
+function addNarrativeLogMut(state, input) {
+  const entry = createNarrativeLogEntry(state, {
+    turn: state.boat.turn,
+    ...input,
+  });
+  const context = narrative.buildContext(state, entry, {
+    language: state.language,
+  });
+  const variant = selectNarrativeVariant(state, narrative, context);
+  entry.storyletId = variant.storyletId;
+  entry.templateId = variant.templateId;
+  state.logs.push(entry);
+  rememberNarrativeVariantMut(state, entry);
   if (state.logs.length > LOG_LIMIT) {
     state.logs.splice(0, state.logs.length - LOG_LIMIT);
   }
@@ -440,9 +523,15 @@ function checkEndConditionsMut(state, clearFinishDeltas = true) {
         target.death_reason = "exiled";
         target.accusation_score += 8;
         addLogMut(state, "log.final_overload");
-        addLogMut(state, "event.exile_vote", {
-          target_key: target.name_key,
-          actor_key: highestAlive(state, "influence")?.name_key || target.name_key,
+        const actor = highestAlive(state, "influence") || target;
+        addNarrativeLogMut(state, {
+          id: "event.exile_vote",
+          eventId: "exile_vote",
+          intent: "exile",
+          actor,
+          target,
+          params: actorTargetParams(actor, target),
+          tags: ["social", "exile", phaseForTurn(state.boat.turn)],
         });
       }
     }
@@ -769,7 +858,14 @@ function eventHiddenResourceFoundMut(state) {
       addEnemyMut(character, target);
     }
   }
-  addLogMut(state, "event.hidden_resource_found", nameParams(target));
+  addNarrativeLogMut(state, {
+    id: "event.hidden_resource_found",
+    eventId: "hidden_resource_found",
+    intent: "reveal",
+    target,
+    params: nameParams(target),
+    tags: ["resource", "betrayal", phaseForTurn(state.boat.turn)],
+  });
   return { target };
 }
 
@@ -785,15 +881,23 @@ function eventExileTheWeakMut(state) {
   }
 
   instigator.instigation_count += 1;
-  const elder = findAliveCharacter(state, "elder");
-  if (elder) {
-    elder.fear += 20;
+  const target = findAliveCharacter(state, "elder") || lowestAlive(state, "health");
+  if (target) {
+    target.fear += 20;
   }
   for (const character of aliveCharacters(state)) {
     character.morality -= 5;
   }
-  addLogMut(state, "event.exile_the_weak", nameParams(instigator));
-  return { actor: instigator };
+  addNarrativeLogMut(state, {
+    id: "event.exile_the_weak",
+    eventId: "exile_the_weak",
+    intent: "accuse",
+    actor: instigator,
+    target,
+    params: target ? actorTargetParams(instigator, target) : nameParams(instigator),
+    tags: ["social", "accusation", phaseForTurn(state.boat.turn)],
+  });
+  return { actor: instigator, target };
 }
 
 function eventSecretWaterDrinkingMut(state) {
@@ -814,7 +918,15 @@ function eventSecretWaterDrinkingMut(state) {
   target.betrayal_count += 1;
   target.trust -= 15;
   target.accusation_score += 7;
-  addLogMut(state, "event.secret_water_drinking", nameParams(target));
+  addNarrativeLogMut(state, {
+    id: "event.secret_water_drinking",
+    eventId: "secret_water_drinking",
+    intent: "betray",
+    actor: target,
+    target,
+    params: nameParams(target),
+    tags: ["resource", "betrayal", "water", phaseForTurn(state.boat.turn)],
+  });
   return { actor: target };
 }
 
@@ -837,7 +949,15 @@ function eventNurseProtectsMut(state) {
   nurse.health -= 5;
   nurse.trust += 5;
   addAllianceMut(nurse, target);
-  addLogMut(state, "event.nurse_protects", nameParams(nurse));
+  addNarrativeLogMut(state, {
+    id: "event.nurse_protects",
+    eventId: "nurse_protects",
+    intent: "defend",
+    actor: nurse,
+    target,
+    params: actorTargetParams(nurse, target),
+    tags: ["social", "care", phaseForTurn(state.boat.turn)],
+  });
   return { actor: nurse, target };
 }
 
@@ -853,7 +973,14 @@ function eventSoldierTakesOrderMut(state) {
     character.fear -= 5;
     character.trust -= 3;
   }
-  addLogMut(state, "event.soldier_takes_order", nameParams(soldier));
+  addNarrativeLogMut(state, {
+    id: "event.soldier_takes_order",
+    eventId: "soldier_takes_order",
+    intent: "command",
+    actor: soldier,
+    params: nameParams(soldier),
+    tags: ["social", "control", phaseForTurn(state.boat.turn)],
+  });
   return { actor: soldier };
 }
 
@@ -876,7 +1003,15 @@ function eventInfluencerInstigatesMut(state) {
   for (const character of aliveCharacters(state)) {
     character.trust -= 5;
   }
-  addLogMut(state, "event.influencer_instigates", nameParams(influencer));
+  addNarrativeLogMut(state, {
+    id: "event.influencer_instigates",
+    eventId: "influencer_instigates",
+    intent: "seed_doubt",
+    actor: influencer,
+    target,
+    params: actorTargetParams(influencer, target),
+    tags: ["social", "accusation", "doubt", phaseForTurn(state.boat.turn)],
+  });
   return { actor: influencer, target };
 }
 
@@ -899,7 +1034,15 @@ function eventStowawayWitchHuntMut(state) {
   for (const character of aliveCharacters(state)) {
     character.morality -= 5;
   }
-  addLogMut(state, "event.stowaway_witch_hunt", nameParams(stowaway));
+  addNarrativeLogMut(state, {
+    id: "event.stowaway_witch_hunt",
+    eventId: "stowaway_witch_hunt",
+    intent: "accuse",
+    actor: instigator,
+    target: stowaway,
+    params: actorTargetParams(instigator, stowaway),
+    tags: ["social", "accusation", "fear", phaseForTurn(state.boat.turn)],
+  });
   return { actor: instigator, target: stowaway };
 }
 
@@ -924,7 +1067,14 @@ function eventVoluntarySacrificeMut(state) {
       character.morality += 3;
     }
   }
-  addLogMut(state, "event.voluntary_sacrifice", nameParams(target));
+  addNarrativeLogMut(state, {
+    id: "event.voluntary_sacrifice",
+    eventId: "voluntary_sacrifice",
+    intent: "sacrifice",
+    target,
+    params: nameParams(target),
+    tags: ["social", "sacrifice", phaseForTurn(state.boat.turn)],
+  });
   return { target };
 }
 
@@ -940,7 +1090,12 @@ function eventBoatDamageMut(state) {
   state.boat.stability -= 5;
   state.boat.hull_damage += 6;
   state.boat.water_ingress += 1;
-  addLogMut(state, "event.boat_damage");
+  addNarrativeLogMut(state, {
+    id: "event.boat_damage",
+    eventId: "boat_damage",
+    intent: "environment_pressure",
+    tags: ["environment", "damage", phaseForTurn(state.boat.turn)],
+  });
   return {};
 }
 
@@ -960,14 +1115,27 @@ function eventPanicOutburstMut(state) {
   if (victim) {
     victim.health -= 10;
   }
-  addLogMut(state, "event.panic_outburst", nameParams(target));
+  addNarrativeLogMut(state, {
+    id: "event.panic_outburst",
+    eventId: "panic_outburst",
+    intent: "lash_out",
+    actor: target,
+    target: victim,
+    params: victim ? actorTargetParams(target, victim) : nameParams(target),
+    tags: ["social", "fear", "violence", phaseForTurn(state.boat.turn)],
+  });
   return { actor: target, target: victim };
 }
 
 function eventRescueSignalMut(state) {
   state.boat.rescue_signal_seen = true;
   state.boat.chapter_finished = true;
-  addLogMut(state, "event.rescue_signal");
+  addNarrativeLogMut(state, {
+    id: "event.rescue_signal",
+    eventId: "rescue_signal",
+    intent: "hope",
+    tags: ["environment", "hope", phaseForTurn(state.boat.turn)],
+  });
   return {};
 }
 
@@ -975,7 +1143,12 @@ function eventSilentTurnMut(state) {
   for (const character of aliveCharacters(state)) {
     character.fear += 2;
   }
-  addLogMut(state, "event.silent_turn");
+  addNarrativeLogMut(state, {
+    id: "event.silent_turn",
+    eventId: "silent_turn",
+    intent: "silence",
+    tags: ["social", "silence", phaseForTurn(state.boat.turn)],
+  });
   return {};
 }
 
@@ -988,7 +1161,12 @@ function eventLeakSpreadsMut(state) {
       character.health -= 2;
     }
   }
-  addLogMut(state, "event.leak_spreads");
+  addNarrativeLogMut(state, {
+    id: "event.leak_spreads",
+    eventId: "leak_spreads",
+    intent: "environment_pressure",
+    tags: ["environment", "water", "damage", phaseForTurn(state.boat.turn)],
+  });
   return {};
 }
 
@@ -999,7 +1177,12 @@ function eventSuppliesCrackHullMut(state) {
   for (const character of aliveCharacters(state)) {
     character.fear += 3;
   }
-  addLogMut(state, "event.supplies_crack_hull");
+  addNarrativeLogMut(state, {
+    id: "event.supplies_crack_hull",
+    eventId: "supplies_crack_hull",
+    intent: "environment_pressure",
+    tags: ["environment", "load", "damage", phaseForTurn(state.boat.turn)],
+  });
   return {};
 }
 
@@ -1019,7 +1202,15 @@ function eventPublicAccusationMut(state) {
   for (const character of aliveCharacters(state)) {
     character.morality -= 2;
   }
-  addLogMut(state, "event.public_accusation", actorTargetParams(actor, target));
+  addNarrativeLogMut(state, {
+    id: "event.public_accusation",
+    eventId: "public_accusation",
+    intent: "accuse",
+    actor,
+    target,
+    params: actorTargetParams(actor, target),
+    tags: ["social", "accusation", phaseForTurn(state.boat.turn)],
+  });
   return { actor, target };
 }
 
@@ -1040,7 +1231,15 @@ function eventSurvivalPactMut(state) {
   if (pressureTarget) {
     pressureTarget.accusation_score += 4;
   }
-  addLogMut(state, "event.survival_pact", actorTargetParams(actor, target));
+  addNarrativeLogMut(state, {
+    id: "event.survival_pact",
+    eventId: "survival_pact",
+    intent: "ally",
+    actor,
+    target,
+    params: actorTargetParams(actor, target),
+    tags: ["social", "alliance", phaseForTurn(state.boat.turn)],
+  });
   return { actor, target };
 }
 
@@ -1068,14 +1267,30 @@ function eventExileVoteMut(state) {
     target.betrayal_count += target.greed >= 70 ? 1 : 0;
     state.boat.despair += 2;
     state.boat.load_pressure = calculateLoadPressure(state);
-    addLogMut(state, "event.exile_vote", actorTargetParams(actor, target));
+    addNarrativeLogMut(state, {
+      id: "event.exile_vote",
+      eventId: "exile_vote",
+      intent: "exile",
+      actor,
+      target,
+      params: actorTargetParams(actor, target),
+      tags: ["social", "exile", phaseForTurn(state.boat.turn)],
+    });
   } else {
     target.trust -= 15;
     target.fear += 15;
     target.health -= 8;
     target.accusation_score += 5;
     state.boat.last_failed_exile_turn = state.boat.turn;
-    addLogMut(state, "event.exile_resisted", actorTargetParams(actor, target));
+    addNarrativeLogMut(state, {
+      id: "event.exile_resisted",
+      eventId: "exile_resisted",
+      intent: "resist",
+      actor,
+      target,
+      params: actorTargetParams(actor, target),
+      tags: ["social", "exile", "resisted", phaseForTurn(state.boat.turn)],
+    });
   }
   return { actor, target };
 }
@@ -1099,7 +1314,15 @@ function eventFailedExileViolentMut(state) {
     bystander.health -= 5;
     bystander.fear += 6;
   }
-  addLogMut(state, "event.failed_exile_violent", actorTargetParams(actor, target));
+  addNarrativeLogMut(state, {
+    id: "event.failed_exile_violent",
+    eventId: "failed_exile_violent",
+    intent: "violence",
+    actor,
+    target,
+    params: actorTargetParams(actor, target),
+    tags: ["social", "exile", "violence", phaseForTurn(state.boat.turn)],
+  });
   return { actor, target };
 }
 
@@ -1120,7 +1343,14 @@ function eventVoluntarySacrificeNewMut(state) {
     character.morality += 4;
     character.fear = Math.max(0, character.fear - 3);
   }
-  addLogMut(state, "event.voluntary_sacrifice_new", { target_key: target.name_key });
+  addNarrativeLogMut(state, {
+    id: "event.voluntary_sacrifice_new",
+    eventId: "voluntary_sacrifice",
+    intent: "sacrifice",
+    target,
+    params: { target_key: target.name_key },
+    tags: ["social", "sacrifice", phaseForTurn(state.boat.turn)],
+  });
   return { target };
 }
 

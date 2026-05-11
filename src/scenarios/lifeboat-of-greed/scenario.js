@@ -7,6 +7,7 @@ import { judgementRules } from "./judgement.js";
 import { en } from "./localization.en.js";
 import { ko } from "./localization.ko.js";
 import { meters } from "./meters.js";
+import { narrative } from "./narrative/index.js";
 import { phases } from "./phases.js";
 import { powers } from "./powers.js";
 import { resources } from "./resources.js";
@@ -25,6 +26,7 @@ export const lifeboatOfGreedScenario = {
   effects,
   judgementRules,
   meters,
+  narrative,
   localization: { ko, en },
   balanceTargets,
 };

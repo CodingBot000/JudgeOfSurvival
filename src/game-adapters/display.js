@@ -1,4 +1,6 @@
 import { LANGUAGE_CODES, TRANSLATIONS } from "../content/localization.js";
+import { renderNarrativeLog } from "../survival-core/narrative/narrative-engine.js";
+import { isNarrativeLogEntry } from "../survival-core/narrative/semantic-log.js";
 import { getScenario } from "./scenario-registry.js";
 
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -27,7 +29,16 @@ export function getLanguageOptions(state) {
   }));
 }
 
-export function formatLogEntry(state, entry) {
+export function formatLogEntry(state, entry, scenario = getScenario(state.scenarioId)) {
+  if (isNarrativeLogEntry(entry)) {
+    const rendered = renderNarrativeLog(state, scenario, entry, {
+      language: state.language,
+      translate,
+    });
+    if (rendered) {
+      return rendered;
+    }
+  }
   return translate(state, entry.key, entry.params || {});
 }
 
@@ -85,7 +96,9 @@ export function renderGameToText(state, screen = "trial", scenario = getScenario
     },
     character_deltas: state.characterStatDeltas || {},
     characters: visibleCharacters,
-    recent_logs: state.logs.slice(-6).map((entry) => formatLogEntry(state, entry)),
+    recent_logs: state.logs
+      .slice(-6)
+      .map((entry) => formatLogEntry(state, entry, scenario)),
   });
 }
 

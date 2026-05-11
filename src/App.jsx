@@ -569,7 +569,7 @@ function LogList({ game, limit }) {
   return (
     <div className="log-list">
       {entries.map((entry, index) => (
-        <div className="log-entry" key={`${entry.key}-${index}`}>
+        <div className="log-entry" key={`${entry.key || entry.id}-${index}`}>
           {formatLogEntry(game, entry)}
         </div>
       ))}

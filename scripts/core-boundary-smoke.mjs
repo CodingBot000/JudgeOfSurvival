@@ -8,12 +8,7 @@ const coreDirs = [
   path.join(root, "src", "game-core"),
 ];
 const survivalCoreDir = path.join(root, "src", "survival-core");
-const coreFiles = coreDirs.flatMap((coreDir) =>
-  fs
-    .readdirSync(coreDir)
-    .filter((fileName) => fileName.endsWith(".js"))
-    .map((fileName) => path.join(coreDir, fileName)),
-);
+const coreFiles = coreDirs.flatMap((coreDir) => readJsFiles(coreDir));
 
 const bannedPatterns = [
   { label: "React import", pattern: /from\s+["']react["']/ },
@@ -61,3 +56,13 @@ assert.match(appSource, /from\s+"\.\/game-adapters\/scenario-registry\.js"/);
 assert.match(appSource, /from\s+"\.\/game-adapters\/display\.js"/);
 
 console.log("Core boundary smoke test passed.");
+
+function readJsFiles(dir) {
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const entryPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      return readJsFiles(entryPath);
+    }
+    return entry.name.endsWith(".js") ? [entryPath] : [];
+  });
+}

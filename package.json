@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "architecture": "node scripts/core-boundary-smoke.mjs",
+    "narrative": "node scripts/narrative-smoke.mjs",
     "smoke": "node scripts/logic-smoke.mjs"
   },
   "dependencies": {
