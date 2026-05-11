@@ -87,6 +87,8 @@ export const ko = {
   "web.count.sacrifice": "희생",
   "web.count.hypocrisy": "위선",
   "web.count.instigation": "선동",
+  "web.log.death_alert": "사망자 발생: {name}",
+  "web.log.unknown_deceased": "누군가",
   "web.guide.color": "색상: 붉음=공포 높음, 노랑=탐욕 높음, 초록=도덕성 높음, 회색=사망.",
   "web.panel.crisis": "위기",
   "web.status.hull": "선체 파손도: {value}",

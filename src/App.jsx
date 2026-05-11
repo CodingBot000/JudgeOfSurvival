@@ -16,6 +16,7 @@ import {
   Scale,
   ScrollText,
   ShieldAlert,
+  Skull,
   Users,
   VolumeX,
   Waves,
@@ -384,7 +385,7 @@ function TrialScreen({ game, scenario, t, onMinorPower, onMajorPower }) {
 
       <section className="panel recent-log-panel">
         <PanelHeader icon={<ScrollText size={18} />} title={t("web.panel.recent_log")} />
-        <LogList game={game} limit={5} />
+        <LogList game={game} limit={5} t={t} />
       </section>
 
       <PowerPanel
@@ -485,7 +486,7 @@ function LogScreen({ game, t }) {
   return (
     <section className="wide-screen">
       <PanelHeader icon={<ScrollText size={18} />} title={t("web.nav.log")} />
-      <LogList game={game} />
+      <LogList game={game} t={t} />
     </section>
   );
 }
@@ -670,17 +671,67 @@ function MetricChip({ label, value, delta }) {
   );
 }
 
-function LogList({ game, limit }) {
-  const entries = limit ? game.logs.slice(-limit) : game.logs;
+function LogList({ game, limit, t }) {
+  const listRef = useRef(null);
+  const startIndex = limit ? Math.max(0, game.logs.length - limit) : 0;
+  const entries = game.logs.slice(startIndex);
+  const translateLog = t || ((key, params) => translate(game, key, params));
+
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) {
+      return undefined;
+    }
+    const frame = requestAnimationFrame(() => {
+      list.scrollTop = list.scrollHeight;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [game.logs.length, limit]);
+
   return (
-    <div className="log-list">
+    <div className="log-list" ref={listRef}>
       {entries.map((entry, index) => (
-        <div className="log-entry" key={`${entry.key || entry.id}-${index}`}>
-          {formatLogEntry(game, entry)}
+        <div
+          className={cx("log-entry", isDeathLogEntry(entry) && "death-log-entry")}
+          key={`${entry.key || entry.id}-${startIndex + index}`}
+        >
+          {isDeathLogEntry(entry) && (
+            <DeathLogAlert game={game} entry={entry} t={translateLog} />
+          )}
+          <div className="log-entry-text">{formatLogEntry(game, entry)}</div>
         </div>
       ))}
     </div>
   );
+}
+
+function DeathLogAlert({ game, entry, t }) {
+  const name = deathLogTargetName(game, entry);
+  return (
+    <div className="death-log-alert" role="status">
+      <Skull size={18} aria-hidden="true" />
+      <strong>{t("web.log.death_alert", { name })}</strong>
+    </div>
+  );
+}
+
+function isDeathLogEntry(entry) {
+  return (
+    entry?.eventId === "death" ||
+    entry?.id === "log.death" ||
+    entry?.key === "log.death"
+  );
+}
+
+function deathLogTargetName(game, entry) {
+  const target = game.characters.find((character) => character.id === entry.targetId);
+  if (target) {
+    return characterName(game, target);
+  }
+  if (entry.params?.name_key) {
+    return translate(game, entry.params.name_key);
+  }
+  return entry.params?.name || translate(game, "web.log.unknown_deceased");
 }
 
 function LifeboatVisual({ game, t }) {

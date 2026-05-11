@@ -87,6 +87,8 @@ export const en = {
   "web.count.sacrifice": "Sacrifice",
   "web.count.hypocrisy": "Hypocrisy",
   "web.count.instigation": "Instigation",
+  "web.log.death_alert": "Death occurred: {name}",
+  "web.log.unknown_deceased": "Someone",
   "web.guide.color": "Color guide: red = high fear, yellow = high greed, green = high morality, gray = dead.",
   "web.panel.crisis": "Crisis",
   "web.status.hull": "Hull Damage: {value}",
