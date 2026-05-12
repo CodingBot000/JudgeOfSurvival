@@ -26,6 +26,9 @@ export const COMMON_TRANSLATIONS = {
     "web.panel.outcomes": "Outcomes",
     "web.status.alive": "Alive: {count}",
     "web.judgement.pending": "Final judgement is not complete.",
+    "web.event_overlay.major_event": "Major Event",
+    "web.event_overlay.next_image": "Next Image",
+    "web.event_overlay.close": "Close",
     "web.social.none": "None"
   },
   "ko": {
@@ -55,6 +58,9 @@ export const COMMON_TRANSLATIONS = {
     "web.panel.outcomes": "결과",
     "web.status.alive": "생존: {count}",
     "web.judgement.pending": "최종 판정이 아직 완료되지 않았습니다.",
+    "web.event_overlay.major_event": "중대 이벤트",
+    "web.event_overlay.next_image": "다음 이미지",
+    "web.event_overlay.close": "닫기",
     "web.social.none": "없음"
   }
 };

@@ -41,6 +41,8 @@ import {
   DEFAULT_SCENARIO_ID,
   getScenario,
 } from "./game-adapters/scenario-registry.js";
+import { EventOverlay } from "./event-overlay/EventOverlay.jsx";
+import { buildEventOverlayEvent } from "./event-overlay/event-overlay-model.js";
 
 const NAV_ITEMS = [
   { id: "trial", labelKey: "web.nav.trial", Icon: Waves },
@@ -88,9 +90,16 @@ export default function App() {
   const [game, setGame] = useState(() => createInitialState(scenario));
   const [screen, setScreen] = useState("trial");
   const [debugOpen, setDebugOpen] = useState(false);
+  const [dismissedOverlayId, setDismissedOverlayId] = useState("");
   const done = scenario.rules.isJudgementDone(game);
   const previousDone = useRef(done);
   const t = (key, params) => translate(game, key, params);
+  const pendingEventOverlay = useMemo(
+    () => buildEventOverlayEvent(game, scenario),
+    [game, scenario],
+  );
+  const eventOverlay =
+    pendingEventOverlay?.id === dismissedOverlayId ? null : pendingEventOverlay;
 
   useEffect(() => {
     document.title = t("ui.title.game");
@@ -105,14 +114,25 @@ export default function App() {
   }, [done]);
 
   useEffect(() => {
-    const renderText = () => renderGameToText(game, screen, scenario);
+    const renderText = () => {
+      const snapshot = JSON.parse(renderGameToText(game, screen, scenario));
+      snapshot.event_overlay = eventOverlay
+        ? {
+            id: eventOverlay.id,
+            eventId: eventOverlay.eventId,
+            title: eventOverlay.title,
+            slide_count: eventOverlay.slides.length,
+          }
+        : null;
+      return JSON.stringify(snapshot);
+    };
     window.render_game_to_text = renderText;
     window.advanceTime = () => renderText();
     return () => {
       delete window.render_game_to_text;
       delete window.advanceTime;
     };
-  }, [game, screen]);
+  }, [eventOverlay, game, scenario, screen]);
 
   const languageOptions = useMemo(() => getLanguageOptions(game), [game.language]);
 
@@ -127,6 +147,13 @@ export default function App() {
   const restart = () => {
     setGame(createInitialState(scenario, { language: game.language }));
     setScreen("trial");
+    setDismissedOverlayId("");
+  };
+
+  const closeEventOverlay = () => {
+    if (pendingEventOverlay) {
+      setDismissedOverlayId(pendingEventOverlay.id);
+    }
   };
 
   return (
@@ -243,6 +270,15 @@ export default function App() {
           <span>{t("ui.button.restart")}</span>
         </button>
       </footer>
+
+      <EventOverlay
+        event={eventOverlay}
+        labels={{
+          close: t("web.event_overlay.close"),
+          nextImage: t("web.event_overlay.next_image"),
+        }}
+        onClose={closeEventOverlay}
+      />
     </div>
   );
 }
