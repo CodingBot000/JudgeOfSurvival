@@ -87,7 +87,7 @@ export function renderGameToText(state, screen = "trial", scenario = getScenario
 
   return JSON.stringify({
     coordinate_system:
-      "Lifeboat visual positions use normalized x/y in a left-to-right, top-to-bottom SVG viewport.",
+      "Lifeboat visual positions use normalized x/y in the left-to-right, top-to-bottom scene viewport.",
     screen,
     language: state.language,
     boat: { ...state.boat },
@@ -155,12 +155,12 @@ function applyParams(language, scenario, template, params) {
 
 function lifeboatPositionForIndex(index) {
   const positions = [
-    { x: 0.2, y: 0.44 },
-    { x: 0.38, y: 0.35 },
-    { x: 0.56, y: 0.43 },
-    { x: 0.74, y: 0.35 },
-    { x: 0.32, y: 0.62 },
-    { x: 0.64, y: 0.62 },
+    { x: 0.3, y: 0.42 },
+    { x: 0.47, y: 0.33 },
+    { x: 0.64, y: 0.43 },
+    { x: 0.38, y: 0.62 },
+    { x: 0.55, y: 0.61 },
+    { x: 0.72, y: 0.62 },
   ];
   return positions[index] || { x: 0.5, y: 0.5 };
 }

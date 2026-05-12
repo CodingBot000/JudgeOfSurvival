@@ -68,20 +68,48 @@ const POWER_ICONS = {
 const STATUS_ICONS = {
   gauge: Gauge,
   droplets: Droplets,
+  package: Package,
   waves: Waves,
   heart: HeartPulse,
   eye: Eye,
   scale: Scale,
 };
 
-const LIFEBOAT_POSITIONS = [
-  { x: 100, y: 130, labelY: 172 },
-  { x: 222, y: 96, labelY: 60 },
-  { x: 322, y: 128, labelY: 171 },
-  { x: 456, y: 96, labelY: 60 },
-  { x: 200, y: 182, labelY: 224 },
-  { x: 396, y: 182, labelY: 224 },
+const STATUS_OVERVIEW = [
+  { id: "water", icon: "droplets", labelKey: "ui.status.water" },
+  { id: "food", icon: "package", labelKey: "web.status.food" },
+  { id: "stability", icon: "waves", labelKey: "ui.status.stability" },
+  { id: "rescue_chance", icon: "heart", labelKey: "ui.status.rescue" },
+  { id: "minor_power", icon: "eye", labelKey: "ui.status.minor_power" },
+  { id: "major_power", icon: "scale", labelKey: "ui.status.major_power" },
 ];
+
+const PORTRAIT_PATHS = {
+  chairman: "/character/portrait/portrait_vale_rich.png",
+  nurse: "/character/portrait/portrait_clara_nurse.png",
+  soldier: "/character/portrait/portrait_grant_soldier.png",
+  influencer: "/character/portrait/portrait_mia_influencer.png",
+  elder: "/character/portrait/portrait_theo_old_man.png",
+  stowaway: "/character/portrait/portrait_nox_hooded_man.png",
+};
+
+const SCENE_POSITIONS = {
+  chairman: { left: 30, top: 42 },
+  nurse: { left: 47, top: 33 },
+  soldier: { left: 64, top: 43 },
+  influencer: { left: 38, top: 62 },
+  elder: { left: 55, top: 61 },
+  stowaway: { left: 72, top: 62 },
+};
+
+const CHARACTER_BADGES = {
+  chairman: { ko: "탐욕", en: "Greedy", tone: "greed" },
+  nurse: { ko: "도덕", en: "Moral", tone: "moral" },
+  soldier: { ko: "질서", en: "Order", tone: "order" },
+  influencer: { ko: "선동", en: "Instigator", tone: "instigator" },
+  elder: { ko: "쇠약", en: "Weak", tone: "weak" },
+  stowaway: { ko: "의심", en: "Suspect", tone: "suspect" },
+};
 
 const cx = (...parts) => parts.filter(Boolean).join(" ");
 
@@ -89,6 +117,7 @@ export default function App() {
   const scenario = DEFAULT_SCENARIO;
   const [game, setGame] = useState(() => createInitialState(scenario));
   const [screen, setScreen] = useState("trial");
+  const [activePanel, setActivePanel] = useState(null);
   const [debugOpen, setDebugOpen] = useState(false);
   const [dismissedOverlayId, setDismissedOverlayId] = useState("");
   const done = scenario.rules.isJudgementDone(game);
@@ -109,6 +138,7 @@ export default function App() {
   useEffect(() => {
     if (done && !previousDone.current) {
       setScreen("judgement");
+      setActivePanel("judgement");
     }
     previousDone.current = done;
   }, [done]);
@@ -147,7 +177,18 @@ export default function App() {
   const restart = () => {
     setGame(createInitialState(scenario, { language: game.language }));
     setScreen("trial");
+    setActivePanel(null);
     setDismissedOverlayId("");
+  };
+
+  const openPanel = (panel) => {
+    setActivePanel(panel);
+    setScreen(panel);
+  };
+
+  const closePanel = () => {
+    setActivePanel(null);
+    setScreen("trial");
   };
 
   const closeEventOverlay = () => {
@@ -161,62 +202,22 @@ export default function App() {
       <header className="app-header">
         <div className="brand-lockup">
           <span className="brand-mark" aria-hidden="true">
-            <Anchor size={24} />
+            <Anchor size={26} />
           </span>
           <div>
-            <h1>{t("ui.title.chapter_1")}</h1>
-            <p>{t("ui.title.game")}</p>
+            <h1>{t("ui.title.game")}</h1>
+            <p>
+              {t("ui.title.chapter_1")} ·{" "}
+              {t("ui.status.turn", {
+                turn: game.boat.turn,
+                max_turn: game.boat.max_turn,
+              })}
+            </p>
           </div>
         </div>
 
-        <div className="header-actions">
-          <button
-            id="debug-toggle-btn"
-            type="button"
-            className={cx("debug-toggle", debugOpen && "active")}
-            aria-controls="narrative-debug-panel"
-            aria-expanded={debugOpen}
-            onClick={() => setDebugOpen((current) => !current)}
-          >
-            <Bug size={18} aria-hidden="true" />
-            <span>디버그</span>
-          </button>
-
-          <label className="language-select">
-            <Languages size={18} aria-hidden="true" />
-            <span>{t("ui.status.language")}</span>
-            <select
-              aria-label={t("ui.status.language")}
-              value={game.language}
-              onChange={(event) => apply((current) => setLanguage(current, event.target.value))}
-            >
-              {languageOptions.map((option) => (
-                <option key={option.code} value={option.code}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+        <StatusStrip game={game} scenario={scenario} t={t} />
       </header>
-
-      <nav className="screen-tabs" aria-label="Screens">
-        {NAV_ITEMS.map(({ id, labelKey, Icon }) => (
-          <button
-            id={`nav-${id}`}
-            key={id}
-            type="button"
-            className={cx("screen-tab", screen === id && "active")}
-            aria-pressed={screen === id}
-            onClick={() => setScreen(id)}
-          >
-            <Icon size={18} aria-hidden="true" />
-            <span>{t(labelKey)}</span>
-          </button>
-        ))}
-      </nav>
-
-      <StatusStrip game={game} scenario={scenario} t={t} />
 
       {debugOpen && (
         <NarrativeDebugPanel
@@ -227,34 +228,81 @@ export default function App() {
       )}
 
       <main className="screen-frame">
-        {screen === "trial" && (
-          <TrialScreen
-            game={game}
-            scenario={scenario}
-            t={t}
-            onMinorPower={(powerId) =>
-              runCommand({ type: COMMAND_TYPES.USE_MINOR_POWER, powerId })
-            }
-            onMajorPower={(powerId) =>
-              runCommand({ type: COMMAND_TYPES.USE_MAJOR_POWER, powerId })
-            }
-          />
-        )}
-        {screen === "roster" && <RosterScreen game={game} scenario={scenario} t={t} />}
-        {screen === "log" && <LogScreen game={game} t={t} />}
-        {screen === "judgement" && <JudgementScreen game={game} scenario={scenario} t={t} />}
+        <TrialScreen
+          game={game}
+          scenario={scenario}
+          t={t}
+          onOpenPanel={openPanel}
+          onMinorPower={(powerId) =>
+            runCommand({ type: COMMAND_TYPES.USE_MINOR_POWER, powerId })
+          }
+          onMajorPower={(powerId) =>
+            runCommand({ type: COMMAND_TYPES.USE_MAJOR_POWER, powerId })
+          }
+        />
       </main>
 
       <footer className="action-bar">
         <button
-          id="next-turn-btn"
+          id="nav-roster"
           type="button"
-          className="primary-action"
-          disabled={done}
-          onClick={() => runCommand({ type: COMMAND_TYPES.NEXT_TURN })}
+          className="utility-action"
+          onClick={() => openPanel("roster")}
         >
-          <ChevronRight size={19} aria-hidden="true" />
-          <span>{t("ui.button.next_turn")}</span>
+          <Users size={17} aria-hidden="true" />
+          <span>{t("web.nav.roster")}</span>
+        </button>
+        <button
+          id="nav-log"
+          type="button"
+          className="utility-action"
+          onClick={() => openPanel("log")}
+        >
+          <ScrollText size={17} aria-hidden="true" />
+          <span>{t("web.nav.log")}</span>
+        </button>
+        <button
+          id="details-panel-btn"
+          type="button"
+          className="utility-action"
+          onClick={() => openPanel("details")}
+        >
+          <Gauge size={17} aria-hidden="true" />
+          <span>{t("web.panel.crisis")}</span>
+        </button>
+        <button
+          id="nav-judgement"
+          type="button"
+          className="utility-action"
+          onClick={() => openPanel("judgement")}
+        >
+          <Scale size={17} aria-hidden="true" />
+          <span>{t("web.nav.judgement")}</span>
+        </button>
+        <button
+          id="settings-panel-btn"
+          type="button"
+          className="utility-action"
+          onClick={() => openPanel("settings")}
+        >
+          <Languages size={17} aria-hidden="true" />
+          <span>{t("ui.status.language")}</span>
+        </button>
+        <button
+          id="debug-toggle-btn"
+          type="button"
+          className={cx("utility-action", "debug-toggle", debugOpen && "active")}
+          aria-controls="narrative-debug-panel"
+          aria-expanded={debugOpen}
+          onClick={() => setDebugOpen((current) => !current)}
+        >
+          <Bug size={17} aria-hidden="true" />
+          <span>디버그</span>
+        </button>
+        <div className="action-spacer" />
+        <button id="restart-btn" type="button" onClick={restart}>
+          <RotateCcw size={18} aria-hidden="true" />
+          <span>{t("ui.button.restart")}</span>
         </button>
         <button
           id="finish-chapter-btn"
@@ -265,11 +313,46 @@ export default function App() {
           <Scale size={18} aria-hidden="true" />
           <span>{t("ui.button.finish")}</span>
         </button>
-        <button id="restart-btn" type="button" onClick={restart}>
-          <RotateCcw size={18} aria-hidden="true" />
-          <span>{t("ui.button.restart")}</span>
+        <button
+          id="next-turn-btn"
+          type="button"
+          className="primary-action"
+          disabled={done}
+          onClick={() => runCommand({ type: COMMAND_TYPES.NEXT_TURN })}
+        >
+          <ChevronRight size={19} aria-hidden="true" />
+          <span>{t("ui.button.next_turn")}</span>
         </button>
       </footer>
+
+      {activePanel && (
+        <OverlayPanel
+          title={overlayTitle(activePanel, t)}
+          icon={overlayIcon(activePanel)}
+          onClose={closePanel}
+        >
+          {activePanel === "roster" && (
+            <RosterScreen game={game} scenario={scenario} t={t} />
+          )}
+          {activePanel === "log" && <LogScreen game={game} t={t} />}
+          {activePanel === "judgement" && (
+            <JudgementScreen game={game} scenario={scenario} t={t} />
+          )}
+          {activePanel === "details" && (
+            <DetailsPanel game={game} scenario={scenario} t={t} />
+          )}
+          {activePanel === "settings" && (
+            <SettingsPanel
+              game={game}
+              languageOptions={languageOptions}
+              t={t}
+              onLanguageChange={(language) =>
+                apply((current) => setLanguage(current, language))
+              }
+            />
+          )}
+        </OverlayPanel>
+      )}
 
       <EventOverlay
         event={eventOverlay}
@@ -279,6 +362,53 @@ export default function App() {
         }}
         onClose={closeEventOverlay}
       />
+    </div>
+  );
+}
+
+function overlayTitle(panel, t) {
+  if (panel === "details") {
+    return t("web.panel.crisis");
+  }
+  if (panel === "settings") {
+    return t("ui.status.language");
+  }
+  const navItem = NAV_ITEMS.find((item) => item.id === panel);
+  return navItem ? t(navItem.labelKey) : panel;
+}
+
+function overlayIcon(panel) {
+  if (panel === "details") {
+    return <Gauge size={19} />;
+  }
+  if (panel === "settings") {
+    return <Languages size={19} />;
+  }
+  const navItem = NAV_ITEMS.find((item) => item.id === panel);
+  const Icon = navItem?.Icon || ScrollText;
+  return <Icon size={19} />;
+}
+
+function OverlayPanel({ title, icon, children, onClose }) {
+  return (
+    <div
+      className="modal-backdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <aside className="modal-panel" role="dialog" aria-modal="true" aria-label={title}>
+        <header className="modal-header">
+          <PanelHeader icon={icon} title={title} />
+          <button type="button" className="modal-close" onClick={onClose} aria-label="닫기">
+            <X size={18} aria-hidden="true" />
+          </button>
+        </header>
+        <div className="modal-body">{children}</div>
+      </aside>
     </div>
   );
 }
@@ -363,7 +493,7 @@ function DebugField({ label, value }) {
 }
 
 function StatusStrip({ game, scenario, t }) {
-  const items = scenario.meters.status.map((metric) => {
+  const items = STATUS_OVERVIEW.map((metric) => {
     const Icon = STATUS_ICONS[metric.icon] || Gauge;
     return {
       Icon,
@@ -385,43 +515,48 @@ function StatusStrip({ game, scenario, t }) {
   );
 }
 
-function TrialScreen({ game, scenario, t, onMinorPower, onMajorPower }) {
+function TrialScreen({ game, scenario, t, onOpenPanel, onMinorPower, onMajorPower }) {
+  const focusCharacter = selectFocusCharacter(game);
+
   return (
     <div className="trial-grid">
-      <section className="panel lifeboat-panel">
-        <PanelHeader icon={<Waves size={18} />} title={t("web.panel.lifeboat")} />
-        <p className="boat-guide">{t("web.guide.color")}</p>
-        <div className="crisis-block">
-          <PanelHeader icon={<Gauge size={18} />} title={t("web.panel.crisis")} />
-          <div className="crisis-grid">
-            {scenario.meters.crisis.map((meter) => (
-              <ScenarioMeter
-                key={meter.id}
-                game={game}
-                scenario={scenario}
-                meter={meter}
-                t={t}
-              />
-            ))}
-          </div>
+      <section className="panel survivor-panel">
+        <div className="panel-title-row">
+          <PanelHeader icon={<Users size={18} />} title={t("ui.panel.characters")} />
+          <span className="alive-badge">
+            {t("web.status.alive", { count: scenario.rules.aliveCount(game) })}
+          </span>
         </div>
-        <LifeboatVisual game={game} t={t} />
-        <div className="boat-meters">
-          {scenario.meters.support.map((meter) => (
-            <ScenarioMeter
-              key={meter.id}
-              game={game}
-              scenario={scenario}
-              meter={meter}
-              t={t}
-            />
-          ))}
-        </div>
+        <CompactRoster game={game} scenario={scenario} t={t} />
       </section>
 
-      <section className="panel recent-log-panel">
-        <PanelHeader icon={<ScrollText size={18} />} title={t("web.panel.recent_log")} />
-        <LogList game={game} limit={5} t={t} />
+      <section className="panel scene-panel">
+        <div className="panel-title-row">
+          <PanelHeader icon={<Waves size={18} />} title={t("web.panel.lifeboat")} />
+          <button
+            type="button"
+            className="tiny-panel-button"
+            onClick={() => onOpenPanel("details")}
+          >
+            <Gauge size={15} aria-hidden="true" />
+            <span>{t("web.panel.crisis")}</span>
+          </button>
+        </div>
+        <LifeboatVisual game={game} t={t} />
+        <CurrentFocus game={game} scenario={scenario} character={focusCharacter} t={t} />
+        <section className="recent-log-panel">
+          <div className="panel-title-row">
+            <PanelHeader icon={<ScrollText size={18} />} title={t("web.panel.recent_log")} />
+            <button
+              type="button"
+              className="tiny-panel-button"
+              onClick={() => onOpenPanel("log")}
+            >
+              <span>{t("web.nav.log")}</span>
+            </button>
+          </div>
+          <LogList game={game} limit={4} t={t} />
+        </section>
       </section>
 
       <PowerPanel
@@ -431,6 +566,82 @@ function TrialScreen({ game, scenario, t, onMinorPower, onMajorPower }) {
         onMinorPower={onMinorPower}
         onMajorPower={onMajorPower}
       />
+    </div>
+  );
+}
+
+function CompactRoster({ game, scenario, t }) {
+  return (
+    <div className="compact-roster">
+      {game.characters.map((character) => (
+        <article
+          key={character.id}
+          className={cx("compact-character", !character.alive && "dead")}
+        >
+          <img src={portraitPath(character)} alt="" aria-hidden="true" draggable="false" />
+          <div className="compact-character-main">
+            <div className="compact-character-header">
+              <div>
+                <h2>{characterName(game, character)}</h2>
+                <p>{characterRole(game, character)}</p>
+              </div>
+              <CharacterBadge game={game} character={character} />
+            </div>
+            <div className="mini-stat-grid">
+              <MiniStat
+                label={t("web.stat.health")}
+                value={character.health}
+                delta={scenario.rules.getCharacterDelta(game, character.id, "health")}
+                tone="health"
+              />
+              <MiniStat
+                label={t("web.stat.fear")}
+                value={character.fear}
+                delta={scenario.rules.getCharacterDelta(game, character.id, "fear")}
+                tone="fear"
+              />
+              <MiniStat
+                label={t("web.stat.greed")}
+                value={character.greed}
+                delta={scenario.rules.getCharacterDelta(game, character.id, "greed")}
+                tone="greed"
+              />
+              <MiniStat
+                label={t("web.stat.trust")}
+                value={character.trust}
+                delta={scenario.rules.getCharacterDelta(game, character.id, "trust")}
+                tone="trust"
+              />
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  );
+}
+
+function CharacterBadge({ game, character }) {
+  const badge = CHARACTER_BADGES[character.id] || {
+    ko: character.alive ? "생존" : "사망",
+    en: character.alive ? "Alive" : "Dead",
+    tone: character.alive ? "order" : "dead",
+  };
+  return (
+    <span className={cx("character-badge", badge.tone, !character.alive && "dead")}>
+      {game.language === "en" ? badge.en : badge.ko}
+    </span>
+  );
+}
+
+function MiniStat({ label, value, delta, tone }) {
+  const width = `${Math.max(0, Math.min(100, value))}%`;
+  return (
+    <div className={cx("mini-stat", tone)}>
+      <span>{label}</span>
+      <div className="mini-track" aria-hidden="true">
+        <i style={{ width }} />
+      </div>
+      <StatValue value={value} delta={delta} />
     </div>
   );
 }
@@ -460,6 +671,7 @@ function PowerPanel({ game, scenario, t, onMinorPower, onMajorPower }) {
               id={`power-${id}`}
               key={id}
               type="button"
+              title={t(labelKey)}
               disabled={minorDisabled}
               onClick={() => onMinorPower(id)}
             >
@@ -485,6 +697,7 @@ function PowerPanel({ game, scenario, t, onMinorPower, onMajorPower }) {
               id={`power-${id}`}
               key={id}
               type="button"
+              title={t(labelKey)}
               disabled={majorDisabled}
               onClick={() => onMajorPower(id)}
             >
@@ -545,6 +758,66 @@ function JudgementScreen({ game, scenario, t }) {
           </div>
         ))}
       </div>
+    </section>
+  );
+}
+
+function DetailsPanel({ game, scenario, t }) {
+  return (
+    <section className="details-panel">
+      <div className="details-grid">
+        <div className="details-block">
+          <PanelHeader icon={<Gauge size={18} />} title={t("web.panel.crisis")} />
+          <div className="meter-grid">
+            {scenario.meters.crisis.map((meter) => (
+              <ScenarioMeter
+                key={meter.id}
+                game={game}
+                scenario={scenario}
+                meter={meter}
+                t={t}
+              />
+            ))}
+          </div>
+        </div>
+        <div className="details-block">
+          <PanelHeader icon={<Package size={18} />} title={t("web.panel.supplies")} />
+          <div className="meter-grid">
+            {scenario.meters.support.map((meter) => (
+              <ScenarioMeter
+                key={meter.id}
+                game={game}
+                scenario={scenario}
+                meter={meter}
+                t={t}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+      <p className="boat-guide">{t("web.guide.color")}</p>
+    </section>
+  );
+}
+
+function SettingsPanel({ game, languageOptions, t, onLanguageChange }) {
+  return (
+    <section className="settings-panel">
+      <label className="language-select">
+        <Languages size={18} aria-hidden="true" />
+        <span>{t("ui.status.language")}</span>
+        <select
+          aria-label={t("ui.status.language")}
+          value={game.language}
+          onChange={(event) => onLanguageChange(event.target.value)}
+        >
+          {languageOptions.map((option) => (
+            <option key={option.code} value={option.code}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
     </section>
   );
 }
@@ -660,6 +933,9 @@ function statusText(game, scenario, id, labelKey, t) {
   if (id === "water") {
     return t(labelKey, { water: game.boat.water });
   }
+  if (id === "food") {
+    return t(labelKey, { food: game.boat.food });
+  }
   if (id === "stability") {
     return t(labelKey, { stability: game.boat.stability });
   }
@@ -773,96 +1049,112 @@ function deathLogTargetName(game, entry) {
 function LifeboatVisual({ game, t }) {
   return (
     <div className="boat-visual" role="img" aria-label={t("web.panel.lifeboat")}>
-      <svg viewBox="0 0 600 280" focusable="false">
-        <defs>
-          <linearGradient id="seaGradient" x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0%" stopColor="#d8eee7" />
-            <stop offset="52%" stopColor="#8ec7bd" />
-            <stop offset="100%" stopColor="#3d8a86" />
-          </linearGradient>
-          <linearGradient id="boatGradient" x1="0" x2="1">
-            <stop offset="0%" stopColor="#8f5142" />
-            <stop offset="52%" stopColor="#c98254" />
-            <stop offset="100%" stopColor="#6e3f36" />
-          </linearGradient>
-        </defs>
-        <rect x="0" y="0" width="600" height="280" fill="url(#seaGradient)" />
-        <path
-          d="M35 214 C108 196 174 196 252 213 C330 230 408 229 565 207 L565 280 L35 280 Z"
-          fill="#2f696d"
-          opacity="0.42"
-        />
-        <path
-          d="M67 174 C104 109 501 109 535 174 C498 223 113 226 67 174 Z"
-          fill="url(#boatGradient)"
-          stroke="#44251f"
-          strokeWidth="8"
-        />
-        <path
-          d="M116 165 C163 141 441 141 489 165"
-          fill="none"
-          stroke="#f4c16f"
-          strokeWidth="10"
-          strokeLinecap="round"
-        />
-        <path
-          d="M137 196 C206 213 392 213 464 196"
-          fill="none"
-          stroke="#522f2a"
-          strokeWidth="7"
-          strokeLinecap="round"
-          opacity="0.45"
-        />
-        {game.characters.map((character, index) => {
-          const position = LIFEBOAT_POSITIONS[index];
-          const tone = characterTone(character);
-          const name = characterName(game, character);
-          const labelWidth = Math.max(62, Math.min(104, name.length * 12 + 20));
-          return (
-            <g key={character.id} className={cx("boat-person", !character.alive && "dead")}>
-              <circle
-                cx={position.x}
-                cy={position.y}
-                r="24"
-                fill={tone.fill}
-                stroke={tone.stroke}
-                strokeWidth="4"
-              />
-              <rect
-                x={position.x - labelWidth / 2}
-                y={position.labelY - 14}
-                width={labelWidth}
-                height="26"
-                rx="8"
-                fill="#ffffff"
-                stroke={tone.stroke}
-                strokeWidth="2"
-              />
-              <text x={position.x} y={position.labelY + 4} textAnchor="middle">
-                {name}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
+      <div className="sea-glow" aria-hidden="true" />
+      <img
+        className="boat-asset"
+        src="/background/boat_cutout.png"
+        alt=""
+        aria-hidden="true"
+        draggable="false"
+      />
+      {game.characters.map((character) => {
+        const position = SCENE_POSITIONS[character.id] || { left: 50, top: 50 };
+        return (
+          <div
+            key={character.id}
+            className={cx("boat-person", !character.alive && "dead")}
+            style={{ left: `${position.left}%`, top: `${position.top}%` }}
+          >
+            <img src={portraitPath(character)} alt="" aria-hidden="true" draggable="false" />
+            <span>{characterName(game, character)}</span>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-function characterTone(character) {
+function CurrentFocus({ game, scenario, character, t }) {
+  if (!character) {
+    return null;
+  }
+  return (
+    <section className="current-focus">
+      <span className="focus-kicker">{game.language === "en" ? "Current Focus" : "현재 주시"}</span>
+      <img src={portraitPath(character)} alt="" aria-hidden="true" draggable="false" />
+      <div>
+        <h2>
+          {characterName(game, character)}
+          <span>· {characterRole(game, character)}</span>
+        </h2>
+        <p>{focusReaction(game, character)}</p>
+        <div className="focus-stats">
+          <MetricChip
+            label={t("web.social.target_label")}
+            value={character.target_pressure || 0}
+            delta={scenario.rules.getCharacterDelta(game, character.id, "target_pressure")}
+          />
+          <MetricChip
+            label={t("web.social.accusation")}
+            value={character.accusation_score || 0}
+            delta={scenario.rules.getCharacterDelta(game, character.id, "accusation_score")}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function selectFocusCharacter(game) {
+  const alive = game.characters.filter((character) => character.alive);
+  const candidates = alive.length > 0 ? alive : game.characters;
+  return [...candidates].sort((a, b) => focusScore(b) - focusScore(a))[0];
+}
+
+function focusScore(character) {
+  return (
+    Number(character.target_pressure || 0) * 2 +
+    Number(character.accusation_score || 0) +
+    Number(character.greed || 0) +
+    Number(character.fear || 0) -
+    Number(character.trust || 0) * 0.3
+  );
+}
+
+function focusReaction(game, character) {
+  const ko = game.language !== "en";
   if (!character.alive) {
-    return { fill: "#7b7e82", stroke: "#34383d" };
+    return ko
+      ? "더 이상 심판에 응답하지 않습니다."
+      : "No longer responds to the trial.";
   }
-  if (character.fear >= 80) {
-    return { fill: "#d95f55", stroke: "#7d221e" };
+  if (character.greed >= 75) {
+    return ko
+      ? "개인 보급품을 지키려는 반응이 가장 강합니다."
+      : "Likely reaction: will protect personal resources.";
   }
-  if (character.greed >= 80) {
-    return { fill: "#d9a63a", stroke: "#7a4e0f" };
+  if (character.fear >= 70) {
+    return ko
+      ? "공포가 높아 작은 의심에도 크게 흔들립니다."
+      : "Likely reaction: fear makes every doubt sharper.";
   }
-  if (character.morality >= 80) {
-    return { fill: "#7ab87a", stroke: "#2f6c3f" };
+  if (character.trust <= 30) {
+    return ko
+      ? "신뢰가 낮아 표적이 되기 쉽습니다."
+      : "Likely reaction: low trust makes them an easy target.";
   }
-  return { fill: "#f4ede2", stroke: "#4d5961" };
+  if (character.morality >= 75) {
+    return ko
+      ? "약자를 보호하려는 선택을 할 가능성이 높습니다."
+      : "Likely reaction: will try to protect the vulnerable.";
+  }
+  return ko
+    ? "상황 변화에 따라 빠르게 입장을 바꿀 수 있습니다."
+    : "Likely reaction: may shift quickly as pressure changes.";
+}
+
+function portraitPath(character) {
+  return PORTRAIT_PATHS[character.id] || "/character/portrait/portrait_nox_hooded_man.png";
 }
 
 function Meter({ label, value, max, delta = 0 }) {
