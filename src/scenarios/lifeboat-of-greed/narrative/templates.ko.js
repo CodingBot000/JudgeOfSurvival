@@ -1,25 +1,25 @@
 export const templatesKo = {
   "power.reduce_water.1": {
     parts: [
-      "심판자의 손길이 닿자 {riskNoun}이 하나 줄어듭니다. {groupName}의 {silence}이 더 낮게 가라앉습니다.",
+      "심판자의 손길이 지나가자 물 한 병이 조용히 사라집니다. 보트 위에는 {silence}만 낮게 깔립니다.",
       "누군가는 목을 만지고, 누군가는 남은 물을 다시 셉니다.",
     ],
   },
   "power.reduce_water.2": {
     parts: [
-      "물통 하나가 비어 있는 채 발견됩니다. 누구도 마신 사람을 보지 못했습니다.",
-      "{groupName}은 서로의 입술이 말라 가는 것만 확인합니다.",
+      "비어 있는 물통 하나가 뒤늦게 발견됩니다. 누가 마셨는지는 아무도 보지 못했습니다.",
+      "보트 위에는 서로의 마른 입술만 남습니다.",
     ],
   },
   "power.rumor.1": {
     parts: [
-      "누가 먼저 말했는지는 남지 않습니다. 다만 숨겨진 진실이 있다는 말만 보트 위를 돕니다.",
-      "{groupName}의 시선이 한 사람씩 짧게 엇갈립니다.",
+      "누가 처음 꺼낸 말인지는 아무도 모릅니다. 숨기는 게 있다는 소문만 보트 위를 맴돕니다.",
+      "시선들이 짧게 부딪혔다가 흩어집니다.",
     ],
   },
   "power.rumor.2": {
     parts: [
-      "심판자가 의심의 씨앗을 던집니다. {silence} 사이로 작은 이름들이 떠오릅니다.",
+      "심판자가 의심의 씨앗을 심습니다. 잠깐의 정적 사이로 이름 몇 개가 떠오릅니다.",
       "아직 고발은 아니지만, 모두가 이미 변명을 준비합니다.",
     ],
   },
@@ -31,27 +31,27 @@ export const templatesKo = {
   },
   "power.hidden_food.2": {
     parts: [
-      "젖은 바닥 아래에서 포장지가 바스락거립니다. {targetName}만 그 소리를 너무 빨리 알아챕니다.",
-      "{groupName}은 아직 모릅니다. 하지만 의심은 곧 냄새를 맡을 겁니다.",
+      "젖은 바닥 아래에서 포장지가 바스락거립니다. {targetName}만 누구보다 먼저 고개를 돌립니다.",
+      "아직 아무도 모릅니다. 하지만 숨긴 것은 오래 가지 못합니다.",
     ],
   },
   "power.storm.1": {
     parts: [
       "수평선이 어두워지고 파도가 보트 옆구리를 때립니다.",
-      "{damageSound}이 들리자 {groupName}은 동시에 가장자리를 붙잡습니다.",
+      "보트 아래에서 {damageSound} 같은 소리가 나자, 모두가 동시에 가장자리를 붙잡습니다.",
     ],
   },
   "power.storm.2": {
     parts: [
-      "먹구름이 너무 가까워집니다. 보트가 한 번 크게 기울고, {riskNoun}이 모두의 입을 막습니다.",
+      "먹구름이 가까이 내려앉습니다. 보트가 한 번 크게 기울고, 모두의 입이 굳게 닫힙니다.",
       "누군가 기도하려 하지만 파도 소리가 먼저 대답합니다.",
     ],
   },
 
   "minor.whisper_fear.1": {
     parts: [
-      "심판자가 {targetName}의 공포 속으로 낮게 속삭입니다.",
-      "{targetName}은 {groupName}을 보며 이미 적의 숫자를 세기 시작합니다.",
+      "심판자의 속삭임이 {targetName}의 공포를 파고듭니다.",
+      "{targetName}, 이제 누가 적인지부터 세기 시작합니다.",
     ],
   },
   "minor.whisper_fear.2": {
@@ -62,13 +62,13 @@ export const templatesKo = {
   },
   "minor.nudge_greed.1": {
     parts: [
-      "심판자가 {targetName}의 굶주림을 조용히 밀어 올립니다.",
+      "심판자가 {targetName}의 허기를 조용히 부추깁니다.",
       "{targetName}: 남은 걸 정확히 세어 봐야 해. 정확히.",
     ],
   },
   "minor.nudge_greed.2": {
     parts: [
-      "{targetName}은 또다시 보급품 쪽을 봅니다. 너무 오래, 너무 조용히.",
+      "{targetName}, 또다시 보급품 쪽을 봅니다. 오래, 말없이.",
       "{groupName} 중 몇 명이 그 시선을 알아차립니다.",
     ],
   },
@@ -81,31 +81,31 @@ export const templatesKo = {
   "minor.seed_doubt.2": {
     parts: [
       "작은 의심 하나가 {targetName}의 이름에 달라붙습니다.",
-      "그 이름이 불리지 않아도, 보트 위의 시선은 이미 방향을 알고 있습니다.",
+      "이름이 입 밖에 나오지 않아도, 시선은 이미 그쪽으로 향합니다.",
     ],
   },
   "minor.false_comfort.1": {
     parts: [
       "심판자가 짧은 안도감을 허락합니다. {groupName}은 잠시 구조가 가까워졌다고 믿습니다.",
-      "그 믿음이 사라지기 전까지는 모두가 조금 덜 떱니다.",
+      "그 믿음이 사라지기 전까지, 보트 위의 긴장감은 잠시 낮아집니다.",
     ],
   },
   "minor.false_comfort.2": {
     parts: [
-      "먼 곳에서 들릴 리 없는 소리가 들린 듯합니다. 누군가 얼굴을 듭니다.",
+      "먼 곳에서 들릴 리 없는 소리가 들린 듯합니다. 누군가 고개를 듭니다.",
       "거짓 희망은 따뜻하지만, 오래 머물지는 않습니다.",
     ],
   },
   "minor.heavy_silence.1": {
     parts: [
-      "바다가 침묵합니다. 그래서 보트 위의 숨소리가 더 선명해집니다.",
+      "바다가 침묵합니다. 보트 위의 숨소리가 더 선명해집니다.",
       "{groupName}은 말하지 않을수록 서로를 더 의심합니다.",
     ],
   },
   "minor.heavy_silence.2": {
     parts: [
-      "{silence}이 너무 오래 이어집니다. 누구도 먼저 사람다운 말을 꺼내지 못합니다.",
-      "그 사이 각자의 마음은 조금씩 작아집니다.",
+      "침묵만 길어집니다. 누구도 먼저 말을 꺼내지 못합니다.",
+      "그 사이 모두가 조금씩 더 움츠러듭니다.",
     ],
   },
 
@@ -117,7 +117,7 @@ export const templatesKo = {
   },
   "event.hidden_resource_found.2": {
     parts: [
-      "포장지가 찢어지는 소리에 모두가 고개를 돌립니다. {targetName}의 손이 가장 늦게 물러납니다.",
+      "포장지가 찢어지는 소리에 모두가 고개를 돌립니다. {targetName}의 손만 가장 늦게 떨어집니다.",
       "변명보다 먼저, 의심이 자리를 차지합니다.",
     ],
   },
@@ -129,8 +129,8 @@ export const templatesKo = {
   },
   "event.exile_the_weak.2": {
     parts: [
-      "{actorName}의 말은 조심스럽지만 방향은 분명합니다.",
-      "{actorName}: {targetLabel}을 계속 태우는 게 정말 모두를 위한 일인가?",
+      "{actorName}, 조심스럽게 말하지만 뜻은 분명합니다.",
+      "{actorName}: {targetLabel}을 계속 보트에 두는 게 정말 모두를 위한 일이야?",
     ],
   },
   "event.secret_water_drinking.1": {
@@ -142,7 +142,7 @@ export const templatesKo = {
   "event.secret_water_drinking.2": {
     parts: [
       "물방울이 {actorName}의 턱 아래로 떨어집니다. 너무 늦게 닦아 냈습니다.",
-      "{groupName}은 아무 말 없이 줄어든 물을 봅니다.",
+      "아무도 말하지 않습니다. 시선은 줄어든 물통에 멈춰 있습니다.",
     ],
   },
   "event.nurse_protects.1": {
@@ -154,30 +154,30 @@ export const templatesKo = {
   "event.nurse_protects.2": {
     parts: [
       "{actorName}은 자기 숨도 고르지 못하면서 {targetName}의 상태를 살핍니다.",
-      "그 작은 돌봄 때문에 보트 위의 잔혹함이 잠시 멈춥니다.",
+      "그 작은 손길 앞에서, 보트 위의 잔혹함도 잠시 멈칫합니다.",
     ],
   },
   "event.soldier_takes_order.1": {
     parts: [
-      "{actorName}이 젖은 바닥을 발로 누르며 목소리를 세웁니다.",
-      "{actorName}: {opener}. 겁먹은 사람은 명령을 따라. 그게 사는 길이야.",
+      "{actorName}, 젖은 바닥을 딛고 버티며 목소리를 높입니다.",
+      "{actorName}: {opener}. 겁먹었으면 내 말을 들어. 그래야 살아.",
     ],
   },
   "event.soldier_takes_order.2": {
     parts: [
       "{actorName}의 명령이 파도 소리를 가릅니다.",
-      "공포는 조금 낮아지지만, 신뢰도 함께 깎여 나갑니다.",
+      "겁은 잠시 잦아들지만, 믿음도 함께 닳아 갑니다.",
     ],
   },
   "event.influencer_instigates.1": {
     parts: [
-      "{actorName}은 {targetName}을 직접 탓하지 않습니다. 대신 모두가 그쪽을 보게 만듭니다.",
-      "{actorName}: {opener}. 우리를 위험하게 만드는 흐름은 분명히 있어요.",
+      "{actorName}, {targetName}을 직접 탓하지는 않습니다. 대신 모두의 시선을 그쪽으로 모읍니다.",
+      "{actorName}: {opener}. 분명 누군가 우리를 위험하게 만들고 있어요.",
     ],
   },
   "event.influencer_instigates.2": {
     parts: [
-      "{actorName}의 목소리는 낮고 부드럽습니다. 그래서 더 멀리 퍼집니다.",
+      "{actorName}의 목소리는 낮고 부드럽습니다. 오히려 그래서 더 멀리 퍼집니다.",
       "{actorName}: 누가 문제인지 말하지 않아도, 다들 알고 있잖아요.",
     ],
   },
@@ -189,26 +189,26 @@ export const templatesKo = {
   },
   "event.stowaway_witch_hunt.2": {
     parts: [
-      "{actorName}이 {targetName}의 과거를 묻기 시작합니다. 질문은 곧 고발처럼 변합니다.",
-      "{groupName}은 대답보다 불안을 더 믿습니다.",
+      "{actorName}, {targetName}의 과거를 캐묻기 시작합니다. 질문은 금세 고발이 됩니다.",
+      "대답보다 불안에 귀를 기울이는 사람이 더 많아집니다.",
     ],
   },
   "event.voluntary_sacrifice.1": {
     parts: [
-      "{targetName}이 보트 가장자리에 손을 올립니다. 누구도 아직 이름을 부르지 않았습니다.",
-      "{targetName}: 내가 줄어들면 너희가 조금이라도 가벼워지겠지.",
+      "{targetName}, 보트 가장자리에 손을 올립니다. 아직 누구도 이름을 부르지 않았습니다.",
+      "{targetName}: 내가 빠지면 너희가 조금은 가벼워지겠지.",
     ],
   },
   "event.voluntary_sacrifice.2": {
     parts: [
       "{targetName}은 마지막으로 {groupName}을 둘러봅니다.",
-      "희생은 말보다 빠르게 일어나고, 남은 사람들은 그 무게를 뒤늦게 느낍니다.",
+      "그 선택은 말보다 빨랐고, 남은 사람들은 뒤늦게 그 무게를 느낍니다.",
     ],
   },
   "event.boat_damage.1": {
     parts: [
-      "{damageSound}이 보트 밑에서 솟구칩니다. 모두가 동시에 숨을 멈춥니다.",
-      "{riskNoun}은 이제 소문이 아니라 손끝에 닿는 사실입니다.",
+      "보트 밑에서 {damageSound} 같은 소리가 터집니다. 모두가 동시에 숨을 멈춥니다.",
+      "이제 위험은 소문이 아니라 손끝에 닿는 사실입니다.",
     ],
   },
   "event.boat_damage.2": {
@@ -219,13 +219,13 @@ export const templatesKo = {
   },
   "event.panic_outburst.1": {
     parts: [
-      "{actorName}이 갑자기 몸을 일으켜 {targetName} 쪽으로 밀려듭니다.",
+      "{actorName}, 갑자기 몸을 일으켜 {targetName} 쪽으로 달려듭니다.",
       "{actorName}: 가까이 오지 마. 난 여기서 죽지 않을 거야.",
     ],
   },
   "event.panic_outburst.2": {
     parts: [
-      "공포가 {actorName}의 얼굴에서 말보다 먼저 터집니다.",
+      "말보다 먼저, {actorName}의 얼굴에 공포가 번집니다.",
       "{targetName}이 피하려는 순간, 보트가 더 크게 흔들립니다.",
     ],
   },
@@ -243,49 +243,49 @@ export const templatesKo = {
   },
   "event.silent_turn.1": {
     parts: [
-      "아무도 말하지 않습니다. {silence}만 보트 바닥에 고입니다.",
-      "바다는 대답하지 않지만, 모두가 조금씩 더 무너집니다.",
+      "아무도 말하지 않습니다. 보트 안에는 침묵만 고입니다.",
+      "바다는 대답하지 않고, 남은 사람들은 조금씩 무너집니다.",
     ],
   },
   "event.silent_turn.2": {
     parts: [
       "{groupName}은 서로를 보지 않으려 애씁니다.",
-      "말이 사라진 자리에 공포만 조금 더 자랍니다.",
+      "말이 사라진 자리에 공포만 더 커집니다.",
     ],
   },
   "event.leak_spreads.1": {
     parts: [
-      "틈새로 물이 {waterMotion}. 손으로 퍼내는 속도보다 빠릅니다.",
+      "틈새로 물이 {waterMotion}. 퍼내는 것보다 차오르는 게 빠릅니다.",
       "{groupName}은 각자 자기 발밑을 내려다봅니다.",
     ],
   },
   "event.leak_spreads.2": {
     parts: [
       "젖은 바닥이 더 차가워집니다. 누군가 물을 퍼내지만 곧 다시 차오릅니다.",
-      "{riskNoun}이 보트 안쪽으로 한 칸 더 들어옵니다.",
+      "물이 보트 안쪽으로 한 뼘 더 밀려듭니다.",
     ],
   },
   "event.supplies_crack_hull.1": {
     parts: [
       "보급품이 한쪽으로 쏠리며 보트 옆면을 세게 밀칩니다.",
-      "{damageSound} 뒤에, 모두가 남은 짐의 무게를 새로 봅니다.",
+      "{damageSound} 같은 소리가 지나간 뒤, 모두가 남은 짐을 다시 봅니다.",
     ],
   },
   "event.supplies_crack_hull.2": {
     parts: [
-      "{riskNoun}이 숫자에서 소리로 바뀝니다. 선체가 짧게 대답합니다.",
-      "이제 물자도 사람도 같은 질문이 됩니다. 무엇을 버릴 것인가.",
+      "하중은 더 이상 숫자가 아닙니다. 선체가 짧게 비명을 냅니다.",
+      "이제 물자도 사람도 같은 질문 앞에 놓입니다. 무엇을 버릴 것인가.",
     ],
   },
   "event.public_accusation.1": {
     parts: [
       "{actorName}이 누구보다 먼저 {targetName}을 가리킵니다.",
-      "{actorName}: {opener}. {targetLabel} 하나 때문에 {riskNoun}이 커지고 있어.",
+      "{actorName}: {opener}. {targetLabel} 하나 때문에 다 같이 위험해지고 있어.",
     ],
   },
   "event.public_accusation.2": {
     parts: [
-      "{actorName}은 바로 이름을 말하지 않습니다. 대신 모두가 {targetName}을 보게 만듭니다.",
+      "{actorName}, 바로 이름을 말하지는 않습니다. 대신 모두의 시선을 {targetName} 쪽으로 돌립니다.",
       "{actorName}: 누굴 탓하자는 게 아니야. 하지만 우리를 가라앉히는 무게는 분명히 있어.",
     ],
   },
@@ -297,68 +297,68 @@ export const templatesKo = {
   },
   "event.survival_pact.1": {
     parts: [
-      "{actorName}와 {targetName}이 거의 들리지 않는 목소리로 말을 맞춥니다.",
-      "그들은 서로를 지키기로 하지만, 그 약속 밖의 사람은 더 외로워집니다.",
+      "두 사람은 거의 들리지 않는 목소리로 말을 맞춥니다.",
+      "서로를 지키기로 한 순간, 약속 밖에 남은 사람들은 더 외로워집니다.",
     ],
   },
   "event.survival_pact.2": {
     parts: [
-      "{actorName}이 {targetName} 쪽으로 조금 가까이 앉습니다. 아무도 동맹이라는 말을 쓰지 않습니다.",
-      "하지만 다음 고발이 어디로 향할지는 조금 더 분명해집니다.",
+      "{actorName}, {targetName} 쪽으로 조금 더 가까이 앉습니다. 아무도 동맹이라는 말은 꺼내지 않습니다.",
+      "하지만 다음 고발이 향할 곳은 조금 더 분명해집니다.",
     ],
   },
   "event.exile_vote.1": {
     parts: [
-      "결국 보트는 이름 하나를 고릅니다. {targetName}이 바다 쪽으로 밀려납니다.",
+      "결국 사람들은 이름 하나를 고릅니다. {targetName}, 바다 쪽으로 밀려납니다.",
       "{actorName}: 우리가 모두 죽을 수는 없어.",
     ],
   },
   "event.exile_vote.2": {
     parts: [
-      "{targetName}의 손이 가장자리를 붙잡지만, 붙잡아 줄 손은 부족합니다.",
-      "보트가 조금 가벼워지는 순간, {groupName}은 아무도 서로를 보지 못합니다.",
+      "{targetName}의 손이 가장자리를 붙잡지만, 붙잡아 줄 손은 모자랍니다.",
+      "보트가 조금 가벼워진 순간, 누구도 서로의 얼굴을 보지 못합니다.",
     ],
   },
   "event.exile_resisted.1": {
     parts: [
-      "{targetName}은 끝내 버팁니다. 하지만 그 이름은 이제 보트 안에 안전하게 돌아오지 못합니다.",
+      "{targetName}, 끝내 버팁니다. 하지만 그 이름은 이제 예전 자리로 돌아오지 못합니다.",
       "{actorName}의 시선은 실패를 인정하지 않습니다.",
     ],
   },
   "event.exile_resisted.2": {
     parts: [
-      "투표는 사람 하나를 던지지 못하고 되돌아옵니다.",
-      "그 대신 {targetName}의 주변에 보이지 않는 선이 그어집니다.",
+      "투표는 사람 하나를 바다로 밀어내지 못한 채 끝납니다.",
+      "대신 {targetName} 주변에 보이지 않는 선이 그어집니다.",
     ],
   },
   "event.failed_exile_violent.1": {
     parts: [
-      "실패한 투표가 몸싸움으로 터집니다. {actorName}과 {targetName}이 좁은 바닥에서 부딪힙니다.",
-      "{damageSound}처럼 짧은 비명이 파도에 묻힙니다.",
+      "실패한 투표가 몸싸움으로 번집니다. {actorName}과 {targetName}, 좁은 바닥에서 부딪힙니다.",
+      "짧은 비명이 파도에 묻힙니다.",
     ],
   },
   "event.failed_exile_violent.2": {
     parts: [
       "{actorName}이 먼저 손을 뻗었는지, {targetName}이 먼저 밀쳤는지는 아무도 확신하지 못합니다.",
-      "확실한 것은 누군가 다쳤고, 다음 투표는 더 쉬워졌다는 사실입니다.",
+      "누군가 다쳤고, 다음 투표가 더 쉬워졌다는 것만은 분명합니다.",
     ],
   },
   "log.death.collapse.1": {
     parts: [
-      "{targetName}의 손에서 힘이 빠집니다. {targetRole}이라는 이름도 이 순간에는 너무 가볍습니다.",
+      "{targetName}의 손에서 힘이 빠집니다. 이 순간에는 직함도 아무 힘이 없습니다.",
       "{groupName}은 그 이름을 바로 부르지 못합니다.",
     ],
   },
   "log.death.collapse.2": {
     parts: [
       "{targetName}은 더 버티지 못합니다. {riskNoun}보다 먼저 몸이 무너집니다.",
-      "보트 위의 {silence}은 방금 전보다 더 무겁습니다.",
+      "보트 위의 침묵은 방금 전보다 더 무겁습니다.",
     ],
   },
   "log.death.capsized.1": {
     parts: [
       "보트가 기울어진 뒤 {targetName}의 자리는 비어 있습니다.",
-      "파도는 설명하지 않고, {groupName}은 그 빈자리를 셉니다.",
+      "파도는 아무 설명도 하지 않고, 남은 사람들은 빈자리를 셉니다.",
     ],
   },
   "log.death.capsized.2": {
@@ -370,13 +370,13 @@ export const templatesKo = {
   "log.death.exiled.1": {
     parts: [
       "{targetName}의 손끝이 마지막으로 가장자리를 스칩니다.",
-      "보트는 가벼워졌지만, {groupName}의 얼굴은 더 가라앉습니다.",
+      "보트는 가벼워졌지만, 남은 얼굴들은 더 가라앉습니다.",
     ],
   },
   "log.death.exiled.2": {
     parts: [
-      "{targetName}은 이름이 투표로 바뀐 뒤 돌아오지 못합니다.",
-      "누구도 승리하지 않았지만, 모두가 조금 더 살아남았습니다.",
+      "{targetName}, 투표로 이름이 지워진 뒤 돌아오지 못합니다.",
+      "누구도 이긴 사람은 없지만, 남은 사람들은 조금 더 살아남았습니다.",
     ],
   },
   "log.death.sacrifice.1": {
@@ -387,14 +387,14 @@ export const templatesKo = {
   },
   "log.death.sacrifice.2": {
     parts: [
-      "{targetName}의 희생은 물보다 조용히 보트 안으로 들어옵니다.",
-      "살아남은 사람들은 덜 무거워졌지만, 누구도 가벼워지지는 못합니다.",
+      "{targetName}의 희생은 물소리보다 조용하게 보트 안에 남습니다.",
+      "살아남은 사람들은 짐을 덜었지만, 누구도 가벼워지지는 못합니다.",
     ],
   },
   "log.judgement.sacrificial_victim.1": {
     parts: [
       "{targetName} - {judgement}.",
-      "{sacrificeCount}번의 희생은 기록됩니다. 심판은 그 선의를 죄로 세지 않습니다.",
+      "{sacrificeCount}번의 희생이 기록됩니다. 심판은 그 선의를 죄로 세지 않습니다.",
     ],
   },
   "log.judgement.sacrificial_victim.2": {
@@ -406,7 +406,7 @@ export const templatesKo = {
   "log.judgement.victim.1": {
     parts: [
       "{targetName} - {judgement}.",
-      "그 이름은 선택한 죄보다 당한 압박으로 더 오래 남습니다.",
+      "그 이름은 저지른 죄보다 견뎌 낸 압박으로 더 오래 남습니다.",
     ],
   },
   "log.judgement.victim.2": {
@@ -418,7 +418,7 @@ export const templatesKo = {
   "log.judgement.betrayer.1": {
     parts: [
       "{targetName} - {judgement}.",
-      "배신 {betrayalCount}번. 살아남기 위한 선택은 숫자가 되어 돌아옵니다.",
+      "배신 {betrayalCount}번. 살아남으려 한 선택이 숫자로 돌아옵니다.",
     ],
   },
   "log.judgement.betrayer.2": {
@@ -430,7 +430,7 @@ export const templatesKo = {
   "log.judgement.hypocrite.1": {
     parts: [
       "{targetName} - {judgement}.",
-      "위선 {hypocrisyCount}번. 말과 손이 같은 방향을 보지 않았습니다.",
+      "위선 {hypocrisyCount}번. 말과 손은 같은 쪽을 향하지 않았습니다.",
     ],
   },
   "log.judgement.hypocrite.2": {
@@ -442,7 +442,7 @@ export const templatesKo = {
   "log.judgement.instigator.1": {
     parts: [
       "{targetName} - {judgement}.",
-      "선동 {instigationCount}번. 그 목소리는 파도보다 오래 보트 위를 흔들었습니다.",
+      "선동 {instigationCount}번. 그 목소리는 파도보다 오래 보트 위에 남았습니다.",
     ],
   },
   "log.judgement.instigator.2": {
@@ -460,13 +460,13 @@ export const templatesKo = {
   "log.judgement.corrupted_survivor.2": {
     parts: [
       "{targetName}에게 내려진 판정은 {judgement}입니다.",
-      "보트는 목숨을 남겼고, 심판은 변한 마음을 남깁니다.",
+      "보트는 목숨을 남겼고, 심판은 달라진 마음을 기록합니다.",
     ],
   },
   "log.judgement.exiled.1": {
     parts: [
       "{targetName} - {judgement}.",
-      "바다로 밀려난 이름은 마지막 판정에서도 그대로 젖어 있습니다.",
+      "바다로 밀려난 이름은 마지막 판정에서도 젖은 채 남습니다.",
     ],
   },
   "log.judgement.exiled.2": {
@@ -478,7 +478,7 @@ export const templatesKo = {
   "log.judgement.survivor.1": {
     parts: [
       "{targetName} - {judgement}.",
-      "심판은 살아남은 사실과 살아남은 방식을 따로 저울에 올립니다.",
+      "심판은 살아남았다는 사실과 살아남은 방식을 따로 적습니다.",
     ],
   },
   "log.judgement.survivor.2": {
