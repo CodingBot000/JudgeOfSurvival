@@ -21,7 +21,7 @@ export const ko = {
   "ui.button.storm": "폭풍 접근시키기",
   "ui.character.vitals": "{status} | 체력 {health} | 공포 {fear} | 탐욕 {greed}",
   "ui.character.traits": "신뢰 {trust} | 도덕성 {morality} | 영향력 {influence}",
-  "character.chairman.name": "베일 씨",
+  "character.chairman.name": "베일",
   "character.chairman.role": "부유한 회장",
   "character.nurse.name": "클라라",
   "character.nurse.role": "간호사",

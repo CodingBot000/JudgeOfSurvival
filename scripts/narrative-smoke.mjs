@@ -53,7 +53,7 @@ const renderedNarratives = narrativeEntries.map((entry) =>
   formatLogEntry(first.state, entry, scenario),
 );
 assert.ok(renderedNarratives.every((line) => typeof line === "string" && line.length > 0));
-assert.ok(renderedNarratives.some((line) => line.includes("베일 씨")));
+assert.ok(renderedNarratives.some((line) => line.includes("베일")));
 assert.ok(renderedNarratives.every((line) => !line.startsWith("event.")));
 
 const englishState = setLanguage(first.state, "en");
