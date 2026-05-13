@@ -1,4 +1,5 @@
 import { COMMON_TRANSLATIONS, LANGUAGE_CODES } from "../content/localization.js";
+import { deriveDialogueSignals } from "../scenarios/lifeboat-of-greed/dialogueSignals.js";
 import { renderNarrativeLog } from "../survival-core/narrative/narrative-engine.js";
 import { isNarrativeLogEntry } from "../survival-core/narrative/semantic-log.js";
 import { getScenario } from "./scenario-registry.js";
@@ -91,11 +92,15 @@ export function renderGameToText(state, screen = "trial", scenario = getScenario
     screen,
     language: state.language,
     boat: { ...state.boat },
+    simulation: state.simulation ? { ...state.simulation } : null,
+    cards: renderCardState(state, scenario),
+    dialogue_signals: deriveDialogueSignals(state),
     boat_deltas: state.boatStatDeltas || {},
     alive_count: scenario.rules.aliveCount(state),
     controls: {
       minor_powers_enabled: scenario.rules.canUseMinorPower(state),
       major_powers_enabled: scenario.rules.canUseMajorPower(state),
+      cards_enabled: !state.simulation?.isPaused && !scenario.rules.isJudgementDone(state),
       next_turn_enabled: !scenario.rules.isJudgementDone(state),
       finish_enabled: !scenario.rules.isJudgementDone(state),
     },
@@ -114,6 +119,33 @@ export function renderGameToText(state, screen = "trial", scenario = getScenario
       targetId: entry.targetId || "",
     })),
   });
+}
+
+function renderCardState(state, scenario) {
+  const cards = state.cards || {};
+  const byId = scenario.cards?.byId || {};
+  return {
+    hand: (cards.hand || []).map((cardId) => {
+      const definition = byId[cardId] || {};
+      return {
+        id: cardId,
+        sourcePowerId: definition.sourcePowerId || "",
+        tier: definition.tier || "",
+        rarity: definition.rarity || "",
+        label: definition.labelKey ? translate(state, definition.labelKey) : cardId,
+        description: definition.descriptionKey
+          ? translate(state, definition.descriptionKey)
+          : "",
+        targetPolicy: definition.targetPolicy || "",
+      };
+    }),
+    draw_count: cards.drawPile?.length || 0,
+    discard_count: cards.discardPile?.length || 0,
+    exhaust_count: cards.exhaustPile?.length || 0,
+    next_draw_at_seconds: cards.nextDrawAtSeconds || 0,
+    cards_played: cards.cardsPlayed || 0,
+    last_played_card_id: cards.lastPlayedCardId || null,
+  };
 }
 
 function resolveScenarioForTranslation(stateOrLanguage) {

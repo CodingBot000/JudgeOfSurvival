@@ -7,12 +7,17 @@ import {
   Coins,
   Droplets,
   Eye,
+  FastForward,
+  FolderOpen,
   Gauge,
   HeartPulse,
   Languages,
   MessageCircle,
   Package,
+  Pause,
+  Play,
   RotateCcw,
+  Save,
   Scale,
   ScrollText,
   ShieldAlert,
@@ -41,6 +46,11 @@ import {
   DEFAULT_SCENARIO_ID,
   getScenario,
 } from "./game-adapters/scenario-registry.js";
+import {
+  hasCompatibleSave,
+  loadSavedGame,
+  saveGameToStorage,
+} from "./game-adapters/local-save.js";
 import { EventOverlay } from "./event-overlay/EventOverlay.jsx";
 import { buildEventOverlayEvent } from "./event-overlay/event-overlay-model.js";
 
@@ -120,8 +130,10 @@ export default function App() {
   const [activePanel, setActivePanel] = useState(null);
   const [debugOpen, setDebugOpen] = useState(false);
   const [dismissedOverlayId, setDismissedOverlayId] = useState("");
+  const [hasSavedGame, setHasSavedGame] = useState(() => hasCompatibleSave(scenario));
   const done = scenario.rules.isJudgementDone(game);
   const previousDone = useRef(done);
+  const autoSaveElapsed = useRef(game.simulation?.elapsedSeconds || 0);
   const t = (key, params) => translate(game, key, params);
   const pendingEventOverlay = useMemo(
     () => buildEventOverlayEvent(game, scenario),
@@ -139,13 +151,40 @@ export default function App() {
     if (done && !previousDone.current) {
       setScreen("judgement");
       setActivePanel("judgement");
+      saveCurrentGame(game);
     }
     previousDone.current = done;
   }, [done]);
 
   useEffect(() => {
-    const renderText = () => {
-      const snapshot = JSON.parse(renderGameToText(game, screen, scenario));
+    if (done || game.simulation?.isPaused) {
+      return undefined;
+    }
+    let previousTimestamp = performance.now();
+    const intervalId = window.setInterval(() => {
+      const now = performance.now();
+      const deltaSeconds = (now - previousTimestamp) / 1000;
+      previousTimestamp = now;
+      setGame((current) =>
+        applyCommand(current, scenario, {
+          type: COMMAND_TYPES.ADVANCE_TIME,
+          deltaSeconds,
+        }),
+      );
+    }, 1000);
+    return () => window.clearInterval(intervalId);
+  }, [done, game.simulation?.isPaused, scenario]);
+
+  useEffect(() => {
+    const elapsed = game.simulation?.elapsedSeconds || 0;
+    if (!done && elapsed - autoSaveElapsed.current >= 30) {
+      saveCurrentGame(game);
+    }
+  }, [done, game]);
+
+  useEffect(() => {
+    const renderTextFor = (state) => {
+      const snapshot = JSON.parse(renderGameToText(state, screen, scenario));
       snapshot.event_overlay = eventOverlay
         ? {
             id: eventOverlay.id,
@@ -156,8 +195,18 @@ export default function App() {
         : null;
       return JSON.stringify(snapshot);
     };
+    const renderText = () => renderTextFor(game);
     window.render_game_to_text = renderText;
-    window.advanceTime = () => renderText();
+    window.advanceTime = (seconds = 60) => {
+      const next = applyCommand(game, scenario, {
+        type: COMMAND_TYPES.ADVANCE_TIME,
+        deltaSeconds: seconds,
+        ignorePause: true,
+        useTimeScale: false,
+      });
+      setGame(next);
+      return renderTextFor(next);
+    };
     return () => {
       delete window.render_game_to_text;
       delete window.advanceTime;
@@ -172,6 +221,25 @@ export default function App() {
 
   const runCommand = (command) => {
     setGame((current) => applyCommand(current, scenario, command));
+  };
+
+  const saveCurrentGame = (state = game) => {
+    saveGameToStorage(state, scenario);
+    autoSaveElapsed.current = state.simulation?.elapsedSeconds || 0;
+    setHasSavedGame(true);
+  };
+
+  const continueSavedGame = () => {
+    const saved = loadSavedGame(scenario);
+    if (!saved) {
+      setHasSavedGame(false);
+      return;
+    }
+    setGame(saved);
+    setScreen("trial");
+    setActivePanel(null);
+    setDismissedOverlayId("");
+    autoSaveElapsed.current = saved.simulation?.elapsedSeconds || 0;
   };
 
   const restart = () => {
@@ -219,6 +287,18 @@ export default function App() {
         <StatusStrip game={game} scenario={scenario} t={t} />
       </header>
 
+      <TimeControlBar
+        game={game}
+        done={done}
+        t={t}
+        onPausedChange={(isPaused) =>
+          runCommand({ type: COMMAND_TYPES.SET_PAUSED, isPaused })
+        }
+        onTimeScaleChange={(timeScale) =>
+          runCommand({ type: COMMAND_TYPES.SET_TIME_SCALE, timeScale })
+        }
+      />
+
       {debugOpen && (
         <NarrativeDebugPanel
           game={game}
@@ -233,11 +313,8 @@ export default function App() {
           scenario={scenario}
           t={t}
           onOpenPanel={openPanel}
-          onMinorPower={(powerId) =>
-            runCommand({ type: COMMAND_TYPES.USE_MINOR_POWER, powerId })
-          }
-          onMajorPower={(powerId) =>
-            runCommand({ type: COMMAND_TYPES.USE_MAJOR_POWER, powerId })
+          onPlayCard={(cardId) =>
+            runCommand({ type: COMMAND_TYPES.PLAY_CARD, cardId })
           }
         />
       </main>
@@ -299,6 +376,26 @@ export default function App() {
           <Bug size={17} aria-hidden="true" />
           <span>디버그</span>
         </button>
+        {hasSavedGame && (
+          <button
+            id="continue-save-btn"
+            type="button"
+            className="utility-action"
+            onClick={continueSavedGame}
+          >
+            <FolderOpen size={17} aria-hidden="true" />
+            <span>{t("web.continue")}</span>
+          </button>
+        )}
+        <button
+          id="save-game-btn"
+          type="button"
+          className="utility-action"
+          onClick={() => saveCurrentGame(game)}
+        >
+          <Save size={17} aria-hidden="true" />
+          <span>{t("web.save")}</span>
+        </button>
         <div className="action-spacer" />
         <button id="restart-btn" type="button" onClick={restart}>
           <RotateCcw size={18} aria-hidden="true" />
@@ -313,16 +410,18 @@ export default function App() {
           <Scale size={18} aria-hidden="true" />
           <span>{t("ui.button.finish")}</span>
         </button>
-        <button
-          id="next-turn-btn"
-          type="button"
-          className="primary-action"
-          disabled={done}
-          onClick={() => runCommand({ type: COMMAND_TYPES.NEXT_TURN })}
-        >
-          <ChevronRight size={19} aria-hidden="true" />
-          <span>{t("ui.button.next_turn")}</span>
-        </button>
+        {debugOpen && (
+          <button
+            id="next-turn-btn"
+            type="button"
+            className="primary-action"
+            disabled={done}
+            onClick={() => runCommand({ type: COMMAND_TYPES.NEXT_TURN })}
+          >
+            <ChevronRight size={19} aria-hidden="true" />
+            <span>{t("ui.button.next_turn")}</span>
+          </button>
+        )}
       </footer>
 
       {activePanel && (
@@ -349,6 +448,9 @@ export default function App() {
               onLanguageChange={(language) =>
                 apply((current) => setLanguage(current, language))
               }
+              hasSavedGame={hasSavedGame}
+              onSave={() => saveCurrentGame(game)}
+              onLoad={continueSavedGame}
             />
           )}
         </OverlayPanel>
@@ -492,6 +594,75 @@ function DebugField({ label, value }) {
   );
 }
 
+function TimeControlBar({
+  game,
+  done,
+  t,
+  onPausedChange,
+  onTimeScaleChange,
+}) {
+  const simulation = game.simulation || {};
+  const elapsed = simulation.elapsedSeconds || 0;
+  const duration = simulation.runDurationSeconds || 1;
+  const nextEventIn = Math.max(0, (simulation.nextEventAtSeconds || 0) - elapsed);
+  const nextCardAt = game.cards?.nextDrawAtSeconds || simulation.nextCardDrawAtSeconds || 0;
+  const nextCardIn = Math.max(0, nextCardAt - elapsed);
+  const progress = `${Math.max(0, Math.min(100, (elapsed / duration) * 100))}%`;
+
+  return (
+    <section className="time-control-bar" aria-label="Simulation time controls">
+      <div className="time-progress" aria-hidden="true">
+        <i style={{ width: progress }} />
+      </div>
+      <div className="time-readout">
+        <strong>
+          {t("web.time.elapsed", {
+            elapsed: formatDuration(elapsed),
+            duration: formatDuration(duration),
+          })}
+        </strong>
+        <span>{t("web.time.next_event", { time: formatDuration(nextEventIn) })}</span>
+        <span>{t("web.time.next_card", { time: formatDuration(nextCardIn) })}</span>
+      </div>
+      <div className="time-actions">
+        <button
+          id="time-play-toggle"
+          type="button"
+          disabled={done}
+          onClick={() => onPausedChange(!simulation.isPaused)}
+        >
+          {simulation.isPaused ? (
+            <Play size={16} aria-hidden="true" />
+          ) : (
+            <Pause size={16} aria-hidden="true" />
+          )}
+          <span>{simulation.isPaused ? t("web.time.resume") : t("web.time.pause")}</span>
+        </button>
+        <button
+          id="time-scale-1"
+          type="button"
+          className={cx(simulation.timeScale === 1 && "active")}
+          disabled={done}
+          onClick={() => onTimeScaleChange(1)}
+        >
+          <Play size={15} aria-hidden="true" />
+          <span>{t("web.time.speed_1x")}</span>
+        </button>
+        <button
+          id="time-scale-2"
+          type="button"
+          className={cx(simulation.timeScale === 2 && "active")}
+          disabled={done}
+          onClick={() => onTimeScaleChange(2)}
+        >
+          <FastForward size={15} aria-hidden="true" />
+          <span>{t("web.time.speed_2x")}</span>
+        </button>
+      </div>
+    </section>
+  );
+}
+
 function StatusStrip({ game, scenario, t }) {
   const items = STATUS_OVERVIEW.map((metric) => {
     const Icon = STATUS_ICONS[metric.icon] || Gauge;
@@ -515,7 +686,7 @@ function StatusStrip({ game, scenario, t }) {
   );
 }
 
-function TrialScreen({ game, scenario, t, onOpenPanel, onMinorPower, onMajorPower }) {
+function TrialScreen({ game, scenario, t, onOpenPanel, onPlayCard }) {
   const focusCharacter = selectFocusCharacter(game);
 
   return (
@@ -559,12 +730,11 @@ function TrialScreen({ game, scenario, t, onOpenPanel, onMinorPower, onMajorPowe
         </section>
       </section>
 
-      <PowerPanel
+      <CardHandPanel
         game={game}
         scenario={scenario}
         t={t}
-        onMinorPower={onMinorPower}
-        onMajorPower={onMajorPower}
+        onPlayCard={onPlayCard}
       />
     </div>
   );
@@ -646,67 +816,52 @@ function MiniStat({ label, value, delta, tone }) {
   );
 }
 
-function PowerPanel({ game, scenario, t, onMinorPower, onMajorPower }) {
-  const minorDisabled = !scenario.rules.canUseMinorPower(game);
-  const majorDisabled = !scenario.rules.canUseMajorPower(game);
+function CardHandPanel({ game, scenario, t, onPlayCard }) {
+  const hand = game.cards?.hand || [];
+  const cardsById = scenario.cards?.byId || {};
+  const disabled = scenario.rules.isJudgementDone(game) || game.simulation?.isPaused;
 
   return (
-    <section className="panel power-panel">
-      <div className="power-group">
-        <PanelHeader icon={<Eye size={18} />} title={t("ui.panel.minor_powers")} />
-        <div className="power-status">
-          <span>
-            {t("ui.power_status.minor", {
-              minor: game.boat.minor_power,
-              max_minor: game.boat.max_minor_power,
-            })}
-          </span>
-          <DeltaValue delta={scenario.rules.getBoatDelta(game, "minor_power")} />
-        </div>
-        <div className="power-buttons">
-          {scenario.powers.minor.map(({ id, labelKey }) => {
-            const Icon = POWER_ICONS[id] || Eye;
-            return (
-            <button
-              id={`power-${id}`}
-              key={id}
-              type="button"
-              title={t(labelKey)}
-              disabled={minorDisabled}
-              onClick={() => onMinorPower(id)}
-            >
-              <Icon size={18} aria-hidden="true" />
-              <span>{t(labelKey)}</span>
-            </button>
-          );
-          })}
-        </div>
+    <section className="panel card-hand-panel">
+      <div className="panel-title-row">
+        <PanelHeader icon={<Scale size={18} />} title={t("web.card.hand")} />
+        {game.simulation?.isPaused && (
+          <span className="card-paused-chip">{t("web.card.paused")}</span>
+        )}
       </div>
-
-      <div className="power-group major">
-        <PanelHeader icon={<Scale size={18} />} title={t("ui.panel.major_powers")} />
-        <div className="power-status">
-          <span>{t("ui.power_status.major", { major: game.boat.major_power })}</span>
-          <DeltaValue delta={scenario.rules.getBoatDelta(game, "major_power")} />
-        </div>
-        <div className="power-buttons">
-          {scenario.powers.major.map(({ id, labelKey }) => {
-            const Icon = POWER_ICONS[id] || Scale;
-            return (
+      <div className="card-pile-status">
+        {t("web.card.pile_counts", {
+          draw: game.cards?.drawPile?.length || 0,
+          discard: game.cards?.discardPile?.length || 0,
+          exhaust: game.cards?.exhaustPile?.length || 0,
+        })}
+      </div>
+      <div className="card-list">
+        {hand.length === 0 && <p className="empty-card-hand">{t("web.card.empty")}</p>}
+        {hand.map((cardId) => {
+          const card = cardsById[cardId];
+          const Icon = POWER_ICONS[card?.sourcePowerId] || Scale;
+          return (
             <button
-              id={`power-${id}`}
-              key={id}
+              id={`card-${cardId}`}
+              key={cardId}
               type="button"
-              title={t(labelKey)}
-              disabled={majorDisabled}
-              onClick={() => onMajorPower(id)}
+              className={cx("card-button", card?.tier)}
+              title={card ? t(card.descriptionKey) : cardId}
+              disabled={disabled || !card}
+              onClick={() => onPlayCard(cardId)}
             >
-              <Icon size={18} aria-hidden="true" />
-              <span>{t(labelKey)}</span>
+              <span className="card-button-header">
+                <Icon size={17} aria-hidden="true" />
+                <strong>{card ? t(card.labelKey) : cardId}</strong>
+                <em>{card?.rarity || ""}</em>
+              </span>
+              <span className="card-description">
+                {card ? t(card.descriptionKey) : ""}
+              </span>
             </button>
           );
-          })}
-        </div>
+        })}
       </div>
     </section>
   );
@@ -800,7 +955,15 @@ function DetailsPanel({ game, scenario, t }) {
   );
 }
 
-function SettingsPanel({ game, languageOptions, t, onLanguageChange }) {
+function SettingsPanel({
+  game,
+  languageOptions,
+  t,
+  onLanguageChange,
+  hasSavedGame,
+  onSave,
+  onLoad,
+}) {
   return (
     <section className="settings-panel">
       <label className="language-select">
@@ -818,6 +981,16 @@ function SettingsPanel({ game, languageOptions, t, onLanguageChange }) {
           ))}
         </select>
       </label>
+      <div className="save-actions">
+        <button type="button" onClick={onSave}>
+          <Save size={16} aria-hidden="true" />
+          <span>{t("web.save")}</span>
+        </button>
+        <button type="button" disabled={!hasSavedGame} onClick={onLoad}>
+          <FolderOpen size={16} aria-hidden="true" />
+          <span>{t("web.continue")}</span>
+        </button>
+      </div>
     </section>
   );
 }
@@ -952,6 +1125,13 @@ function statusText(game, scenario, id, labelKey, t) {
     return t(labelKey, { major: game.boat.major_power });
   }
   return t(labelKey, { value: scenarioMetricValue(game, scenario, id) });
+}
+
+function formatDuration(seconds) {
+  const safeSeconds = Math.max(0, Math.floor(Number(seconds || 0)));
+  const minutes = Math.floor(safeSeconds / 60);
+  const remainingSeconds = safeSeconds % 60;
+  return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
 }
 
 function StatValue({ value, delta }) {

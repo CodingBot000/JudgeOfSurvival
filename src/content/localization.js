@@ -15,6 +15,8 @@ export const COMMON_TRANSLATIONS = {
     "log.already_judged": "The trial is already judged. Restart to begin again.",
     "log.no_minor_power": "The Judge has no minor power left for subtle interference.",
     "log.no_major_power": "The Judge has no major power left for such a heavy intervention.",
+    "log.card_paused": "Cards cannot be played while the simulation is paused.",
+    "log.card_not_in_hand": "That card is no longer in hand.",
     "log.final_judgement_header": "--- Final Judgement ---",
     "log.judgement_result": "{name} -> {judgement}",
     "log.max_turn_passed": "The final turn passes. The trial can hold no more.",
@@ -29,7 +31,21 @@ export const COMMON_TRANSLATIONS = {
     "web.event_overlay.major_event": "Major Event",
     "web.event_overlay.next_image": "Next Image",
     "web.event_overlay.close": "Close",
-    "web.social.none": "None"
+    "web.social.none": "None",
+    "web.save": "Save",
+    "web.continue": "Continue",
+    "web.time.pause": "Pause",
+    "web.time.resume": "Resume",
+    "web.time.speed_1x": "1x",
+    "web.time.speed_2x": "2x",
+    "web.time.elapsed": "{elapsed} / {duration}",
+    "web.time.next_event": "Event {time}",
+    "web.time.next_card": "Card {time}",
+    "web.card.hand": "Cards",
+    "web.card.empty": "No cards in hand.",
+    "web.card.paused": "Paused",
+    "web.card.pile_counts": "Draw {draw} | Discard {discard} | Exhaust {exhaust}",
+    "web.card.play": "Play"
   },
   "ko": {
     "language.en": "영어",
@@ -47,6 +63,8 @@ export const COMMON_TRANSLATIONS = {
     "log.already_judged": "이미 판정이 끝난 심판입니다. 재시작하면 다시 시작할 수 있습니다.",
     "log.no_minor_power": "심판자에게 미묘한 개입을 위한 약한 권능이 남아 있지 않습니다.",
     "log.no_major_power": "심판자에게 이런 무거운 개입을 위한 강한 권능이 남아 있지 않습니다.",
+    "log.card_paused": "일시정지 중에는 카드를 사용할 수 없습니다.",
+    "log.card_not_in_hand": "이미 손패에 없는 카드입니다.",
     "log.final_judgement_header": "--- 최종 판정 ---",
     "log.judgement_result": "{name} -> {judgement}",
     "log.max_turn_passed": "마지막 턴이 지나갑니다. 이 심판은 더 버틸 수 없습니다.",
@@ -61,7 +79,21 @@ export const COMMON_TRANSLATIONS = {
     "web.event_overlay.major_event": "중대 이벤트",
     "web.event_overlay.next_image": "다음 이미지",
     "web.event_overlay.close": "닫기",
-    "web.social.none": "없음"
+    "web.social.none": "없음",
+    "web.save": "저장",
+    "web.continue": "이어하기",
+    "web.time.pause": "정지",
+    "web.time.resume": "재생",
+    "web.time.speed_1x": "1배속",
+    "web.time.speed_2x": "2배속",
+    "web.time.elapsed": "{elapsed} / {duration}",
+    "web.time.next_event": "이벤트 {time}",
+    "web.time.next_card": "카드 {time}",
+    "web.card.hand": "카드",
+    "web.card.empty": "손패에 카드가 없습니다.",
+    "web.card.paused": "일시정지",
+    "web.card.pile_counts": "덱 {draw} | 버림 {discard} | 소멸 {exhaust}",
+    "web.card.play": "사용"
   }
 };
 

@@ -9,6 +9,9 @@
     "preview": "vite preview --host 0.0.0.0",
     "architecture": "node scripts/core-boundary-smoke.mjs",
     "narrative": "node scripts/narrative-smoke.mjs",
+    "realtime-smoke": "node scripts/realtime-smoke.mjs",
+    "card-smoke": "node scripts/card-smoke.mjs",
+    "dialogue-smoke": "node scripts/dialogue-signals-smoke.mjs",
     "smoke": "node scripts/logic-smoke.mjs"
   },
   "dependencies": {

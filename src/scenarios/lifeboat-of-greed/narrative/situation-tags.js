@@ -1,6 +1,7 @@
 import { voiceProfiles } from "./voice-profiles.js";
+import { LIFEBOAT_PHASES, phaseForTurn } from "../phase.js";
 
-const PHASES = ["discomfort", "scarcity", "fracture", "collapse"];
+const PHASES = LIFEBOAT_PHASES;
 
 export function buildLifeboatNarrativeContext(state, entry, tools = {}) {
   const actor = findCharacter(state, entry.actorId);
@@ -116,13 +117,6 @@ function translateKey(tools, key) {
 
 function phaseFromEntry(entry) {
   return entry.tags?.find((tag) => PHASES.includes(tag));
-}
-
-function phaseForTurn(turn) {
-  if (turn <= 4) return "discomfort";
-  if (turn <= 8) return "scarcity";
-  if (turn <= 14) return "fracture";
-  return "collapse";
 }
 
 function dominantRiskForBoat(boat) {

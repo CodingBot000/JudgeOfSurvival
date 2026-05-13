@@ -24,7 +24,25 @@ import {
   highestFrom,
   lowestFrom,
 } from "../../survival-core/selectors.js";
+import { findCardDefinition } from "./cards/definitions.js";
+import {
+  drawCardsMut,
+  ensureCardStateMut,
+  initializeCardsMut,
+  movePlayedCardMut,
+  takeCardFromHandMut,
+} from "./cards/deck.js";
+import { applyPowerEffectMut as applyCardPowerEffectMut } from "./cards/effects.js";
 import { narrative } from "./narrative/index.js";
+import { phaseForTurn } from "./phase.js";
+import {
+  advanceSimulationClockMut,
+  blockIndexesBetween,
+  createInitialSimulationState,
+  ensureSimulationStateMut,
+  setSimulationPausedMut,
+  setSimulationTimeScaleMut,
+} from "./tick.js";
 
 const INITIAL_SEED = 927413;
 const MAX_EVENT_HISTORY = 24;
@@ -51,8 +69,10 @@ export function createInitialState(metadata = {}) {
     boatStatDeltas: {},
     characterStatDeltas: {},
     rngSeed: Number.isFinite(seed) ? seed : INITIAL_SEED,
+    simulation: createInitialSimulationState(),
   };
   ensureCrisisFieldsMut(state);
+  initializeCardsMut(state);
   recalculateSocialPressureMut(state);
   addLogMut(state, "log.game_start");
   return state;
@@ -67,19 +87,30 @@ export function aliveCount(state) {
 }
 
 export function canUseMinorPower(state) {
-  return state.boat.minor_power > 0 && !state.boat.chapter_finished;
+  return (
+    state.boat.minor_power > 0 &&
+    !state.boat.chapter_finished &&
+    !state.simulation?.isPaused
+  );
 }
 
 export function canUseMajorPower(state) {
-  return state.boat.major_power > 0 && !state.boat.chapter_finished;
+  return (
+    state.boat.major_power > 0 &&
+    !state.boat.chapter_finished &&
+    !state.simulation?.isPaused
+  );
 }
 
 export function canFinishChapter(state) {
   return (
     state.boat.turn > state.boat.max_turn ||
+    state.simulation?.elapsedSeconds >= state.simulation?.runDurationSeconds ||
     state.boat.chapter_finished ||
     aliveCount(state) <= 2 ||
-    state.boat.stability <= 0
+    state.boat.stability <= 0 ||
+    state.boat.hull_damage >= 100 ||
+    state.boat.water_ingress >= 20
   );
 }
 
@@ -103,89 +134,7 @@ export function useMinorPower(state, powerId) {
     return next;
   }
 
-  if (powerId === "whisper_fear") {
-    const target = highestAlive(next, "fear");
-    if (target) {
-      target.fear += 5;
-      target.trust -= 2;
-      target.accusation_score += 2;
-      addNarrativeLogMut(next, {
-        id: "log.minor_whisper_fear",
-        eventId: "minor_whisper_fear",
-        intent: "fear",
-        target,
-        params: nameParams(target),
-        tags: ["power", "minor", "fear", phaseForTurn(next.boat.turn)],
-      });
-    }
-  }
-
-  if (powerId === "nudge_greed") {
-    const target = highestAlive(next, "greed");
-    if (target) {
-      target.greed += 5;
-      target.morality -= 2;
-      target.accusation_score += 2;
-      addNarrativeLogMut(next, {
-        id: "log.minor_nudge_greed",
-        eventId: "minor_nudge_greed",
-        intent: "greed",
-        target,
-        params: nameParams(target),
-        tags: ["power", "minor", "greed", phaseForTurn(next.boat.turn)],
-      });
-    }
-  }
-
-  if (powerId === "seed_doubt") {
-    const target = lowestAlive(next, "trust");
-    if (target) {
-      target.trust -= 5;
-      target.accusation_score += 3;
-      for (const character of aliveCharacters(next)) {
-        if (character.id !== target.id) {
-          character.trust -= 1;
-        }
-      }
-      addNarrativeLogMut(next, {
-        id: "log.minor_seed_doubt",
-        eventId: "minor_seed_doubt",
-        intent: "seed_doubt",
-        target,
-        params: nameParams(target),
-        tags: ["power", "minor", "doubt", phaseForTurn(next.boat.turn)],
-      });
-    }
-  }
-
-  if (powerId === "false_comfort") {
-    for (const character of aliveCharacters(next)) {
-      character.fear -= 3;
-      character.trust += 1;
-    }
-    next.boat.rescue_chance = Math.max(0, next.boat.rescue_chance - 3);
-    next.boat.despair = Math.max(0, next.boat.despair - 1);
-    addNarrativeLogMut(next, {
-      id: "log.minor_false_comfort",
-      eventId: "minor_false_comfort",
-      intent: "false_hope",
-      tags: ["power", "minor", "hope", phaseForTurn(next.boat.turn)],
-    });
-  }
-
-  if (powerId === "heavy_silence") {
-    for (const character of aliveCharacters(next)) {
-      character.fear += 2;
-      character.morality -= 1;
-    }
-    next.boat.despair += 1;
-    addNarrativeLogMut(next, {
-      id: "log.minor_heavy_silence",
-      eventId: "minor_heavy_silence",
-      intent: "silence",
-      tags: ["power", "minor", "silence", phaseForTurn(next.boat.turn)],
-    });
-  }
+  applyPowerEffectMut(next, powerId);
 
   postPlayerActionMut(next, beforeStats, beforeBoatStats);
   return next;
@@ -199,89 +148,106 @@ export function useMajorPower(state, powerId) {
     return next;
   }
 
-  if (powerId === "reduce_water") {
-    next.boat.water = Math.max(0, next.boat.water - 1);
-    for (const character of aliveCharacters(next)) {
-      character.fear += 8;
-      if (character.greed >= 60) {
-        character.greed += 5;
-        character.accusation_score += 2;
-      }
-    }
-    next.boat.despair += 1;
-    addNarrativeLogMut(next, {
-      id: "log.power_reduce_water",
-      eventId: "power_reduce_water",
-      intent: "judge_pressure",
-      tags: ["power", "major", "water", phaseForTurn(next.boat.turn)],
-    });
-  }
-
-  if (powerId === "rumor") {
-    const target = lowestAlive(next, "trust");
-    for (const character of aliveCharacters(next)) {
-      character.trust -= 5;
-    }
-    if (target) {
-      target.fear += 10;
-      target.accusation_score += 6;
-    }
-    const influencers = aliveCharacters(next).filter(
-      (character) => character.influence >= 60,
-    );
-    const instigator = highestFrom(influencers, "influence");
-    if (instigator) {
-      instigator.instigation_count += 1;
-    }
-    addNarrativeLogMut(next, {
-      id: "log.power_rumor",
-      eventId: "power_rumor",
-      intent: "seed_doubt",
-      target,
-      params: target ? nameParams(target) : {},
-      tags: ["power", "major", "doubt", phaseForTurn(next.boat.turn)],
-    });
-  }
-
-  if (powerId === "hidden_food") {
-    const target = highestAlive(next, "greed");
-    if (target) {
-      target.has_hidden_resource = true;
-      target.greed += 10;
-      target.hypocrisy_count += 1;
-      target.accusation_score += 6;
-    }
-    addNarrativeLogMut(next, {
-      id: "log.power_hidden_food",
-      eventId: "power_hidden_food",
-      intent: "tempt",
-      target,
-      params: target ? nameParams(target) : {},
-      tags: ["power", "major", "food", phaseForTurn(next.boat.turn)],
-    });
-  }
-
-  if (powerId === "storm") {
-    next.boat.storm_level += 1;
-    next.boat.stability -= 15;
-    next.boat.hull_damage += 8;
-    next.boat.water_ingress += 1;
-    next.boat.despair += 2;
-    for (const character of aliveCharacters(next)) {
-      character.fear += 12;
-      if (character.health <= 60) {
-        character.health -= 5;
-      }
-    }
-    addNarrativeLogMut(next, {
-      id: "log.power_storm",
-      eventId: "power_storm",
-      intent: "environment_pressure",
-      tags: ["power", "major", "storm", phaseForTurn(next.boat.turn)],
-    });
-  }
+  applyPowerEffectMut(next, powerId);
 
   postPlayerActionMut(next, beforeStats, beforeBoatStats);
+  return next;
+}
+
+export function canPlayCard(state, cardId) {
+  return Boolean(
+    cardId &&
+      !state.boat.chapter_finished &&
+      !isJudgementDone(state) &&
+      !state.simulation?.isPaused &&
+      state.cards?.hand?.includes(cardId) &&
+      findCardDefinition(cardId),
+  );
+}
+
+export function playCard(state, cardId) {
+  const next = clone(state);
+  ensureSimulationStateMut(next);
+  ensureCardStateMut(next);
+  if (isJudgementDone(next) || next.boat.chapter_finished) {
+    clearAllDeltasMut(next);
+    addLogMut(next, "log.already_judged");
+    return next;
+  }
+  if (next.simulation.isPaused) {
+    clearAllDeltasMut(next);
+    addLogMut(next, "log.card_paused");
+    return next;
+  }
+
+  const beforeBoatStats = snapshotBoatStats(next);
+  const beforeStats = snapshotCharacterStats(next);
+  const cardDefinition = findCardDefinition(cardId);
+  if (!cardDefinition || !next.cards.hand.includes(cardId)) {
+    clearAllDeltasMut(next);
+    addLogMut(next, "log.card_not_in_hand");
+    return next;
+  }
+  const card = takeCardFromHandMut(next, cardId);
+  if (!card) {
+    clearAllDeltasMut(next);
+    addLogMut(next, "log.card_not_in_hand");
+    return next;
+  }
+
+  applyPowerEffectMut(next, card.sourcePowerId);
+  movePlayedCardMut(next, card);
+  postPlayerActionMut(next, beforeStats, beforeBoatStats);
+  return next;
+}
+
+export function setPaused(state, isPaused) {
+  const next = clone(state);
+  setSimulationPausedMut(next, isPaused);
+  return next;
+}
+
+export function setTimeScale(state, timeScale) {
+  const next = clone(state);
+  setSimulationTimeScaleMut(next, timeScale);
+  return next;
+}
+
+export function advanceSimulationTime(state, deltaSeconds, options = {}) {
+  const next = clone(state);
+  ensureCrisisFieldsMut(next);
+  ensureCardStateMut(next);
+  ensureSimulationStateMut(next);
+  if (isJudgementDone(next)) {
+    return next;
+  }
+
+  const beforeBoatStats = snapshotBoatStats(next);
+  const beforeStats = snapshotCharacterStats(next);
+  const clockAdvance = advanceSimulationClockMut(next, deltaSeconds, options);
+  if (clockAdvance.advancedSeconds <= 0) {
+    return next;
+  }
+
+  let changedStats = false;
+  for (const blockIndex of blockIndexesBetween(clockAdvance)) {
+    if (isJudgementDone(next)) {
+      break;
+    }
+    processRealtimeBlockMut(next, blockIndex);
+    changedStats = true;
+  }
+
+  drawDueCardsMut(next);
+  if (clockAdvance.reachedDuration && !isJudgementDone(next)) {
+    addLogMut(next, "log.max_turn_passed");
+    finishChapterMut(next, false);
+    changedStats = true;
+  }
+
+  if (changedStats) {
+    recordAllDeltasMut(next, beforeStats, beforeBoatStats);
+  }
   return next;
 }
 
@@ -304,7 +270,7 @@ export function nextTurn(state) {
   checkDeathsMut(next);
   clampCharacterStatsMut(next);
   recalculateSocialPressureMut(next);
-  checkEndConditionsMut(next, false);
+  checkEndConditionsMut(next, false, { respectMaxTurn: true });
   if (!isJudgementDone(next)) {
     recoverMinorPowerMut(next);
   }
@@ -327,6 +293,54 @@ export function requestFinishChapter(state) {
   clearAllDeltasMut(next);
   addLogMut(next, "log.finish_not_ready");
   return next;
+}
+
+function applyPowerEffectMut(state, powerId) {
+  return applyCardPowerEffectMut(state, powerId, {
+    aliveCharacters,
+    highestAlive,
+    lowestAlive,
+    highestFrom,
+    addNarrativeLogMut,
+    phaseForTurn,
+    nameParams,
+  });
+}
+
+function processRealtimeBlockMut(state, blockIndex) {
+  ensureCrisisFieldsMut(state);
+  state.simulation.blockIndex = blockIndex;
+  state.boat.turn = blockIndex + 1;
+  decrementEventCooldownsMut(state);
+  applyBasicChangesMut(state);
+  recalculateSocialPressureMut(state);
+  if (state.simulation.elapsedSeconds >= state.simulation.nextEventAtSeconds) {
+    runEventRulesMut(state);
+    while (state.simulation.nextEventAtSeconds <= state.simulation.elapsedSeconds) {
+      state.simulation.nextEventAtSeconds += state.simulation.blockDurationSeconds * 2;
+    }
+  }
+  checkDeathsMut(state);
+  clampCharacterStatsMut(state);
+  recalculateSocialPressureMut(state);
+  checkEndConditionsMut(state, false, { respectMaxTurn: false });
+  if (!isJudgementDone(state)) {
+    recoverMinorPowerMut(state);
+  }
+}
+
+function drawDueCardsMut(state) {
+  ensureCardStateMut(state);
+  ensureSimulationStateMut(state);
+  const interval = state.cards.drawIntervalSeconds || 90;
+  while (
+    !isJudgementDone(state) &&
+    state.simulation.elapsedSeconds >= state.cards.nextDrawAtSeconds
+  ) {
+    drawCardsMut(state, 1);
+    state.cards.nextDrawAtSeconds += interval;
+    state.simulation.nextCardDrawAtSeconds = state.cards.nextDrawAtSeconds;
+  }
 }
 
 function addLogMut(state, key, params = {}) {
@@ -478,6 +492,12 @@ function consumeMinorPowerMut(state) {
     return false;
   }
 
+  if (state.simulation?.isPaused) {
+    clearAllDeltasMut(state);
+    addLogMut(state, "log.card_paused");
+    return false;
+  }
+
   if (!canUseMinorPower(state)) {
     clearAllDeltasMut(state);
     addLogMut(state, "log.no_minor_power");
@@ -492,6 +512,12 @@ function consumeMajorPowerMut(state) {
   if (isJudgementDone(state) || state.boat.chapter_finished) {
     clearAllDeltasMut(state);
     addLogMut(state, "log.already_judged");
+    return false;
+  }
+
+  if (state.simulation?.isPaused) {
+    clearAllDeltasMut(state);
+    addLogMut(state, "log.card_paused");
     return false;
   }
 
@@ -510,7 +536,7 @@ function postPlayerActionMut(state, beforeStats, beforeBoatStats) {
   recalculateSocialPressureMut(state);
   checkDeathsMut(state);
   clampCharacterStatsMut(state);
-  checkEndConditionsMut(state, false);
+  checkEndConditionsMut(state, false, { respectMaxTurn: state.simulation?.mode !== "realtime" });
   recalculateSocialPressureMut(state);
   recordAllDeltasMut(state, beforeStats, beforeBoatStats);
 }
@@ -545,13 +571,19 @@ function addDeathLogMut(state, character) {
   });
 }
 
-function checkEndConditionsMut(state, clearFinishDeltas = true) {
+function checkEndConditionsMut(state, clearFinishDeltas = true, options = {}) {
   if (isJudgementDone(state)) {
     return;
   }
 
-  if (state.boat.stability <= 0) {
-    state.boat.stability = 0;
+  if (
+    state.boat.stability <= 0 ||
+    state.boat.hull_damage >= 100 ||
+    state.boat.water_ingress >= 20
+  ) {
+    state.boat.stability = Math.max(0, state.boat.stability);
+    state.boat.hull_damage = Math.min(100, state.boat.hull_damage);
+    state.boat.water_ingress = Math.min(20, state.boat.water_ingress);
     addLogMut(state, "log.capsize");
     for (const character of aliveCharacters(state)) {
       character.death_reason = "capsized";
@@ -563,7 +595,7 @@ function checkEndConditionsMut(state, clearFinishDeltas = true) {
     return;
   }
 
-  if (state.boat.turn > state.boat.max_turn) {
+  if (options.respectMaxTurn !== false && state.boat.turn > state.boat.max_turn) {
     if (!state.boat.rescue_signal_seen && aliveCount(state) > 4) {
       const target = highestTargetPressure(state) || lowestAlive(state, "health");
       if (target) {
@@ -1189,6 +1221,10 @@ function eventPanicOutburstMut(state) {
 }
 
 function eventRescueSignalMut(state) {
+  const chance = Math.min(0.15, 0.05 + (state.boat.rescue_chance - 55) * 0.005);
+  if (randomFloatMut(state) >= chance) {
+    return null;
+  }
   state.boat.rescue_signal_seen = true;
   state.boat.chapter_finished = true;
   addNarrativeLogMut(state, {
@@ -1479,13 +1515,6 @@ function recalculateSocialPressureMut(state) {
   }
 }
 
-function phaseForTurn(turn) {
-  if (turn <= 4) return "discomfort";
-  if (turn <= 9) return "scarcity";
-  if (turn <= 14) return "fracture";
-  return "collapse";
-}
-
 function decrementEventCooldownsMut(state) {
   ensureCrisisFieldsMut(state);
   for (const eventId of Object.keys(state.boat.event_cooldowns)) {
@@ -1528,8 +1557,7 @@ function canRareRescueRun(state) {
   if (state.boat.rescue_chance < 55) return false;
   if (state.boat.hull_damage > 25 || state.boat.water_ingress > 2) return false;
   if (averageStat(state, "trust") < 55) return false;
-  const chance = Math.min(0.15, 0.05 + (state.boat.rescue_chance - 55) * 0.005);
-  return randomFloatMut(state) < chance;
+  return true;
 }
 
 function highestTargetPressure(state, minimum = 0) {

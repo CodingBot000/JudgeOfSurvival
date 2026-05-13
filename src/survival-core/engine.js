@@ -1,4 +1,5 @@
 import { COMMAND_TYPES } from "./commands.js";
+import { advanceSimulationTime } from "./realtime.js";
 import { stampScenarioMetadata } from "./state-schema.js";
 
 export { COMMAND_TYPES };
@@ -41,6 +42,39 @@ export function applyCommand(state, scenario, command) {
     }
     return stampScenarioMetadata(
       scenario.rules.useMinorPower(state, command.powerId),
+      scenario,
+    );
+  }
+
+  if (type === COMMAND_TYPES.PLAY_CARD) {
+    return stampScenarioMetadata(
+      scenario.rules.playCard(state, command.cardId, command.targetId || null),
+      scenario,
+    );
+  }
+
+  if (type === COMMAND_TYPES.ADVANCE_TIME) {
+    return advanceSimulationTime(
+      state,
+      command.deltaSeconds ?? command.seconds ?? 0,
+      scenario,
+      {
+        ignorePause: Boolean(command.ignorePause),
+        useTimeScale: command.useTimeScale,
+      },
+    );
+  }
+
+  if (type === COMMAND_TYPES.SET_PAUSED) {
+    return stampScenarioMetadata(
+      scenario.rules.setPaused(state, Boolean(command.isPaused)),
+      scenario,
+    );
+  }
+
+  if (type === COMMAND_TYPES.SET_TIME_SCALE) {
+    return stampScenarioMetadata(
+      scenario.rules.setTimeScale(state, command.timeScale),
       scenario,
     );
   }
