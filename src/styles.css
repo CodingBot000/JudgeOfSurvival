@@ -86,14 +86,19 @@ button:disabled {
   width: min(1680px, 100dvw);
   height: 100dvh;
   margin: 0 auto;
-  padding: 8px;
+  padding:
+    max(8px, env(safe-area-inset-top))
+    max(8px, env(safe-area-inset-right))
+    max(8px, env(safe-area-inset-bottom))
+    max(8px, env(safe-area-inset-left));
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   gap: 6px;
   overflow: hidden;
 }
 
 .app-header {
+  height: 58px;
   min-height: 58px;
   display: grid;
   grid-template-columns: minmax(240px, 0.72fr) minmax(0, 1.6fr);
@@ -101,6 +106,7 @@ button:disabled {
   align-items: stretch;
   border-bottom: 1px solid rgba(230, 219, 190, 0.12);
   padding-bottom: 6px;
+  overflow: hidden;
 }
 
 .brand-lockup {
@@ -164,7 +170,7 @@ button:disabled {
     linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.018)),
     rgba(9, 11, 12, 0.9);
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
   color: var(--ink);
@@ -190,6 +196,7 @@ button:disabled {
 }
 
 .time-control-bar {
+  height: 42px;
   min-height: 42px;
   display: grid;
   grid-template-columns: minmax(210px, 1fr) auto;
@@ -200,6 +207,7 @@ button:disabled {
   padding: 6px 8px;
   background: rgba(7, 10, 11, 0.82);
   box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
 .time-progress {
@@ -725,10 +733,17 @@ button:disabled {
 }
 
 .card-hand-panel {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
   gap: 8px;
 }
 
+.card-hand-panel > .panel-title-row {
+  grid-row: 1;
+}
+
 .card-pile-status {
+  grid-row: 2;
   border-radius: 8px;
   padding: 7px 9px;
   background: var(--panel-soft);
@@ -746,11 +761,14 @@ button:disabled {
 }
 
 .card-list {
+  grid-row: 3;
+  height: 100%;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-auto-rows: 88px;
   gap: 6px;
   overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .empty-card-hand {
@@ -760,7 +778,8 @@ button:disabled {
 }
 
 .card-button {
-  min-height: 88px;
+  min-height: 0;
+  height: 88px;
   align-items: stretch;
   display: flex;
   flex-direction: column;
@@ -1358,7 +1377,11 @@ button:disabled {
 
 @media (min-width: 1120px) {
   .card-button {
-    min-height: 96px;
+    height: 96px;
+  }
+
+  .card-list {
+    grid-auto-rows: 96px;
   }
 }
 
@@ -1394,6 +1417,7 @@ button:disabled {
   }
 
   .time-control-bar {
+    height: 80px;
     grid-template-columns: 1fr;
   }
 
@@ -1417,11 +1441,16 @@ button:disabled {
 
 @media (max-height: 430px) {
   .app-shell {
-    padding: 6px;
+    padding:
+      max(6px, env(safe-area-inset-top))
+      max(6px, env(safe-area-inset-right))
+      max(6px, env(safe-area-inset-bottom))
+      max(6px, env(safe-area-inset-left));
     gap: 5px;
   }
 
   .app-header {
+    height: 50px;
     min-height: 50px;
     padding-bottom: 5px;
   }
@@ -1438,6 +1467,26 @@ button:disabled {
   .brand-lockup p {
     margin-top: 3px;
     font-size: 11px;
+  }
+
+  .status-pill {
+    height: 44px;
+    min-height: 0;
+    padding: 4px 5px;
+    gap: 4px;
+    overflow: hidden;
+  }
+
+  .status-pill span:not(.delta-value) {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-height: 1.05;
+  }
+
+  .status-pill .delta-value {
+    font-size: 9px;
   }
 
   .panel {
@@ -1507,6 +1556,29 @@ button:disabled {
     flex-basis: 94px;
   }
 
+  .time-control-bar {
+    height: 52px;
+    min-height: 34px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    padding: 4px 6px;
+    gap: 5px;
+  }
+
+  .time-progress {
+    height: 3px;
+  }
+
+  .time-readout {
+    gap: 4px 8px;
+    font-size: 10px;
+  }
+
+  .time-actions button {
+    min-height: 25px;
+    padding: 3px 6px;
+    font-size: 10px;
+  }
+
   .log-entry {
     padding: 5px 7px;
     font-size: 11px;
@@ -1528,9 +1600,13 @@ button:disabled {
   }
 
   .card-button {
-    min-height: 54px;
+    height: 54px;
     padding: 4px 6px;
     gap: 4px;
+  }
+
+  .card-list {
+    grid-auto-rows: 54px;
   }
 
   .action-bar {
@@ -1545,31 +1621,233 @@ button:disabled {
   }
 }
 
-@media (max-width: 720px) {
-  .trial-grid {
-    grid-template-columns: minmax(132px, 0.58fr) minmax(250px, 1.28fr) minmax(136px, 0.6fr);
+@media (max-width: 720px) and (orientation: portrait) {
+  .app-header {
+    height: 130px;
+    min-height: 130px;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding-bottom: 5px;
   }
 
-  .app-header {
-    grid-template-columns: minmax(190px, 0.58fr) minmax(0, 1fr);
+  .brand-lockup {
+    gap: 8px;
+  }
+
+  .brand-mark {
+    width: 40px;
+    height: 40px;
+  }
+
+  .brand-lockup h1 {
+    font-size: 22px;
+  }
+
+  .brand-lockup p {
+    margin-top: 3px;
+    font-size: 11px;
+  }
+
+  .status-strip {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
   }
 
   .status-pill {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    text-align: center;
-    gap: 2px;
+    min-height: 30px;
+    padding: 4px 5px;
   }
 
-  .status-pill span {
+  .status-pill svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .trial-grid {
+    grid-template-columns: 1fr;
+    grid-template-rows:
+      minmax(128px, 0.76fr)
+      minmax(216px, 1.32fr)
+      minmax(132px, 0.82fr);
+  }
+
+  .compact-roster {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+    gap: 5px;
+    overflow: hidden;
+  }
+
+  .compact-character {
+    grid-template-columns: 38px minmax(0, 1fr);
+    padding: 4px;
+    gap: 6px;
+  }
+
+  .compact-character > img {
+    width: 38px;
+    height: 38px;
+  }
+
+  .compact-character h2 {
+    font-size: 14px;
+  }
+
+  .compact-character p,
+  .character-badge {
+    font-size: 10px;
+  }
+
+  .mini-stat-grid {
+    display: none;
+  }
+
+  .scene-panel {
+    min-height: 0;
+  }
+
+  .boat-visual {
+    min-height: 94px;
+  }
+
+  .boat-asset {
+    min-width: 210px;
+  }
+
+  .boat-person {
+    --avatar-size: 31px;
+  }
+
+  .current-focus {
+    flex-basis: 58px;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 8px;
+    padding: 11px 8px 5px;
+  }
+
+  .current-focus img {
+    width: 42px;
+    height: 42px;
+  }
+
+  .current-focus h2 {
+    font-size: 15px;
+  }
+
+  .current-focus h2 span,
+  .current-focus p,
+  .focus-stats {
+    font-size: 10px;
+  }
+
+  .recent-log-panel {
+    flex-basis: 72px;
+    padding: 5px;
+  }
+
+  .recent-log-panel .panel-title-row {
+    min-height: 22px;
+  }
+
+  .recent-log-panel .panel-header h2 {
+    font-size: 14px;
+  }
+
+  .log-entry {
+    padding: 5px 7px;
+    font-size: 11px;
+    line-height: 1.25;
+  }
+
+  .card-hand-panel {
+    gap: 5px;
+  }
+
+  .card-pile-status {
+    display: none;
+  }
+
+  .card-list {
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(158px, 1fr);
+    grid-auto-rows: 1fr;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 2px;
+  }
+
+  .card-button {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 7px;
+    gap: 5px;
+  }
+
+  .card-button-header strong {
+    font-size: 12px;
+  }
+
+  .card-description {
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    font-size: 11px;
+  }
+
+  .empty-card-hand {
+    align-self: center;
+  }
+
+  .status-pill {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    justify-items: stretch;
+    text-align: left;
+    gap: 2px;
+  }
+
+  .status-pill span:not(.delta-value) {
+    display: block;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+  }
+
+  .status-pill .delta-value {
+    font-size: 9px;
   }
 
   .character-grid,
   .details-grid {
     grid-template-columns: 1fr;
+  }
+
+  .action-bar {
+    min-height: 42px;
+    gap: 4px;
+    padding-top: 5px;
+    justify-content: space-between;
+  }
+
+  .action-bar button {
+    width: auto;
+    min-width: 0;
+    min-height: 36px;
+    padding: 0;
+    flex: 1 1 0;
+  }
+
+  .action-bar button span {
+    display: none;
+  }
+
+  .action-spacer {
+    display: none;
+  }
+
+  .primary-action {
+    min-width: 0;
   }
 }

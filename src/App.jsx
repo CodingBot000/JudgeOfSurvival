@@ -376,17 +376,16 @@ export default function App() {
           <Bug size={17} aria-hidden="true" />
           <span>디버그</span>
         </button>
-        {hasSavedGame && (
-          <button
-            id="continue-save-btn"
-            type="button"
-            className="utility-action"
-            onClick={continueSavedGame}
-          >
-            <FolderOpen size={17} aria-hidden="true" />
-            <span>{t("web.continue")}</span>
-          </button>
-        )}
+        <button
+          id="continue-save-btn"
+          type="button"
+          className="utility-action"
+          disabled={!hasSavedGame}
+          onClick={continueSavedGame}
+        >
+          <FolderOpen size={17} aria-hidden="true" />
+          <span>{t("web.continue")}</span>
+        </button>
         <button
           id="save-game-btn"
           type="button"
