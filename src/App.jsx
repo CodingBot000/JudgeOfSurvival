@@ -53,6 +53,13 @@ import {
 } from "./game-adapters/local-save.js";
 import { EventOverlay } from "./event-overlay/EventOverlay.jsx";
 import { buildEventOverlayEvent } from "./event-overlay/event-overlay-model.js";
+import { SpeechBubbleLayer } from "./ui/speech-bubbles/SpeechBubbleLayer.jsx";
+import {
+  advanceSpeechBubbles,
+  createSpeechBubbleState,
+  expireSpeechBubbles,
+  summarizeSpeechBubbles,
+} from "./ui/speech-bubbles/speech-bubble-scheduler.js";
 
 const NAV_ITEMS = [
   { id: "trial", labelKey: "web.nav.trial", Icon: Waves },
@@ -131,9 +138,17 @@ export default function App() {
   const [debugOpen, setDebugOpen] = useState(false);
   const [dismissedOverlayId, setDismissedOverlayId] = useState("");
   const [hasSavedGame, setHasSavedGame] = useState(() => hasCompatibleSave(scenario));
+  const [speechBubbles, setSpeechBubbles] = useState(() => createSpeechBubbleState());
   const done = scenario.rules.isJudgementDone(game);
   const previousDone = useRef(done);
   const autoSaveElapsed = useRef(game.simulation?.elapsedSeconds || 0);
+  const gameRef = useRef(game);
+  const uiBlockersRef = useRef({
+    activePanel,
+    debugOpen,
+    hasEventOverlay: false,
+    done,
+  });
   const t = (key, params) => translate(game, key, params);
   const pendingEventOverlay = useMemo(
     () => buildEventOverlayEvent(game, scenario),
@@ -141,6 +156,19 @@ export default function App() {
   );
   const eventOverlay =
     pendingEventOverlay?.id === dismissedOverlayId ? null : pendingEventOverlay;
+
+  useEffect(() => {
+    gameRef.current = game;
+  }, [game]);
+
+  useEffect(() => {
+    uiBlockersRef.current = {
+      activePanel,
+      debugOpen,
+      hasEventOverlay: Boolean(eventOverlay),
+      done,
+    };
+  }, [activePanel, debugOpen, done, eventOverlay]);
 
   useEffect(() => {
     document.title = t("ui.title.game");
@@ -183,6 +211,45 @@ export default function App() {
   }, [done, game]);
 
   useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      const nowMs = performance.now();
+      const currentGame = gameRef.current;
+      const blockers = uiBlockersRef.current;
+      const blocked =
+        blockers.done ||
+        blockers.activePanel ||
+        blockers.debugOpen ||
+        blockers.hasEventOverlay ||
+        currentGame.simulation?.isPaused;
+
+      setSpeechBubbles((current) => {
+        if (blocked) {
+          return expireSpeechBubbles(current, nowMs);
+        }
+        return advanceSpeechBubbles({
+          state: current,
+          game: currentGame,
+          scenario,
+          nowMs,
+          anchors: SCENE_POSITIONS,
+          visibleCharacterIds: Object.keys(SCENE_POSITIONS),
+        });
+      });
+    }, 1500);
+
+    return () => window.clearInterval(intervalId);
+  }, [scenario]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      const nowMs = performance.now();
+      setSpeechBubbles((current) => expireSpeechBubbles(current, nowMs));
+    }, 250);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  useEffect(() => {
     const renderTextFor = (state) => {
       const snapshot = JSON.parse(renderGameToText(state, screen, scenario));
       snapshot.event_overlay = eventOverlay
@@ -193,6 +260,7 @@ export default function App() {
             slide_count: eventOverlay.slides.length,
           }
         : null;
+      snapshot.speech_bubbles = summarizeSpeechBubbles(speechBubbles, performance.now());
       return JSON.stringify(snapshot);
     };
     const renderText = () => renderTextFor(game);
@@ -211,7 +279,7 @@ export default function App() {
       delete window.render_game_to_text;
       delete window.advanceTime;
     };
-  }, [eventOverlay, game, scenario, screen]);
+  }, [eventOverlay, game, scenario, screen, speechBubbles]);
 
   const languageOptions = useMemo(() => getLanguageOptions(game), [game.language]);
 
@@ -236,6 +304,7 @@ export default function App() {
       return;
     }
     setGame(saved);
+    setSpeechBubbles(createSpeechBubbleState());
     setScreen("trial");
     setActivePanel(null);
     setDismissedOverlayId("");
@@ -244,6 +313,7 @@ export default function App() {
 
   const restart = () => {
     setGame(createInitialState(scenario, { language: game.language }));
+    setSpeechBubbles(createSpeechBubbleState());
     setScreen("trial");
     setActivePanel(null);
     setDismissedOverlayId("");
@@ -311,6 +381,7 @@ export default function App() {
         <TrialScreen
           game={game}
           scenario={scenario}
+          speechBubbles={speechBubbles}
           t={t}
           onOpenPanel={openPanel}
           onPlayCard={(cardId) =>
@@ -685,7 +756,7 @@ function StatusStrip({ game, scenario, t }) {
   );
 }
 
-function TrialScreen({ game, scenario, t, onOpenPanel, onPlayCard }) {
+function TrialScreen({ game, scenario, speechBubbles, t, onOpenPanel, onPlayCard }) {
   const focusCharacter = selectFocusCharacter(game);
 
   return (
@@ -712,7 +783,7 @@ function TrialScreen({ game, scenario, t, onOpenPanel, onPlayCard }) {
             <span>{t("web.panel.crisis")}</span>
           </button>
         </div>
-        <LifeboatVisual game={game} t={t} />
+        <LifeboatVisual game={game} speechBubbles={speechBubbles} t={t} />
         <CurrentFocus game={game} scenario={scenario} character={focusCharacter} t={t} />
         <section className="recent-log-panel">
           <div className="panel-title-row">
@@ -1225,7 +1296,7 @@ function deathLogTargetName(game, entry) {
   return entry.params?.name || translate(game, "web.log.unknown_deceased");
 }
 
-function LifeboatVisual({ game, t }) {
+function LifeboatVisual({ game, speechBubbles, t }) {
   return (
     <div className="boat-visual" role="img" aria-label={t("web.panel.lifeboat")}>
       <div className="sea-glow" aria-hidden="true" />
@@ -1249,6 +1320,7 @@ function LifeboatVisual({ game, t }) {
           </div>
         );
       })}
+      <SpeechBubbleLayer bubbles={speechBubbles} />
     </div>
   );
 }

@@ -11,6 +11,7 @@
     "narrative": "node scripts/narrative-smoke.mjs",
     "realtime-smoke": "node scripts/realtime-smoke.mjs",
     "card-smoke": "node scripts/card-smoke.mjs",
+    "speech-bubble-smoke": "node scripts/speech-bubble-smoke.mjs",
     "dialogue-smoke": "node scripts/dialogue-signals-smoke.mjs",
     "smoke": "node scripts/logic-smoke.mjs"
   },

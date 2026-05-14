@@ -2,6 +2,7 @@ import * as rules from "./rules.js";
 import { actors } from "./actors.js";
 import { balanceTargets } from "./balance.js";
 import { cards } from "./cards/definitions.js";
+import * as dialogue from "./dialogue/index.js";
 import { effects } from "./effects.js";
 import { events } from "./events.js";
 import { judgementRules } from "./judgement.js";
@@ -24,6 +25,7 @@ export const lifeboatOfGreedScenario = {
   phases,
   powers,
   cards,
+  dialogue,
   events,
   effects,
   judgementRules,

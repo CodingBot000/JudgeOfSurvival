@@ -1,0 +1,80 @@
+export const DIALOGUE_SET_KEYS = [
+  "neutral",
+  "water_low",
+  "food_low",
+  "boat_breaking",
+  "panic_personal",
+  "distrust_group",
+  "selfish_calculation",
+  "moral_grief",
+  "hidden_resource_secret",
+  "hostile_relationship",
+  "hope_rescue",
+  "collapse_phase",
+];
+
+export const dialogueLineSets = [
+  line("chairman.neutral.1", "chairman", ["neutral"], ["calculation"], 6),
+  line("chairman.neutral.2", "chairman", ["neutral", "distrust_group"], ["cold"], 6),
+  line("chairman.neutral.3", "chairman", ["neutral"], ["authority"], 5),
+  line("chairman.water_low.1", "chairman", ["water_low"], ["resource", "calculation"], 11),
+  line("chairman.food_low.1", "chairman", ["food_low"], ["resource", "cold"], 9),
+  line("chairman.boat_breaking.1", "chairman", ["boat_breaking"], ["risk", "calculation"], 10),
+  line("chairman.selfish_calculation.1", "chairman", ["selfish_calculation", "collapse_phase"], ["burden"], 12),
+  line("chairman.distrust_group.1", "chairman", ["distrust_group"], ["suspicion"], 10),
+
+  line("nurse.neutral.1", "nurse", ["neutral"], ["care"], 6),
+  line("nurse.neutral.2", "nurse", ["neutral", "panic_personal"], ["care"], 6),
+  line("nurse.neutral.3", "nurse", ["neutral", "hope_rescue"], ["hope"], 5),
+  line("nurse.water_low.1", "nurse", ["water_low"], ["care", "resource"], 10),
+  line("nurse.food_low.1", "nurse", ["food_low"], ["care", "resource"], 9),
+  line("nurse.panic_personal.1", "nurse", ["panic_personal"], ["care", "fear"], 11),
+  line("nurse.moral_grief.1", "nurse", ["moral_grief", "collapse_phase"], ["grief"], 11),
+  line("nurse.hostile_relationship.1", "nurse", ["hostile_relationship", "distrust_group"], ["warning"], 9),
+
+  line("soldier.neutral.1", "soldier", ["neutral", "boat_breaking"], ["order"], 7),
+  line("soldier.neutral.2", "soldier", ["neutral", "distrust_group"], ["watch"], 6),
+  line("soldier.neutral.3", "soldier", ["neutral"], ["order"], 6),
+  line("soldier.boat_breaking.1", "soldier", ["boat_breaking"], ["order", "risk"], 12),
+  line("soldier.panic_personal.1", "soldier", ["panic_personal"], ["order", "fear"], 10),
+  line("soldier.distrust_group.1", "soldier", ["distrust_group"], ["watch"], 10),
+  line("soldier.hostile_relationship.1", "soldier", ["hostile_relationship"], ["conflict"], 10),
+  line("soldier.collapse_phase.1", "soldier", ["collapse_phase"], ["order"], 11),
+
+  line("influencer.neutral.1", "influencer", ["neutral"], ["social"], 6),
+  line("influencer.neutral.2", "influencer", ["neutral", "distrust_group"], ["social"], 6),
+  line("influencer.neutral.3", "influencer", ["neutral", "distrust_group"], ["suspicion"], 5),
+  line("influencer.water_low.1", "influencer", ["water_low"], ["social", "resource"], 10),
+  line("influencer.distrust_group.1", "influencer", ["distrust_group"], ["suspicion"], 11),
+  line("influencer.hidden_resource_secret.1", "influencer", ["hidden_resource_secret"], ["secret"], 11),
+  line("influencer.hostile_relationship.1", "influencer", ["hostile_relationship"], ["conflict"], 10),
+  line("influencer.hope_rescue.1", "influencer", ["hope_rescue"], ["hope"], 9),
+
+  line("elder.neutral.1", "elder", ["neutral"], ["weathered"], 6),
+  line("elder.neutral.2", "elder", ["neutral", "food_low"], ["fatigue"], 6),
+  line("elder.neutral.3", "elder", ["neutral", "moral_grief"], ["memory"], 5),
+  line("elder.food_low.1", "elder", ["food_low"], ["fatigue", "resource"], 10),
+  line("elder.panic_personal.1", "elder", ["panic_personal"], ["fear"], 10),
+  line("elder.moral_grief.1", "elder", ["moral_grief"], ["grief"], 11),
+  line("elder.collapse_phase.1", "elder", ["collapse_phase"], ["collapse"], 10),
+  line("elder.hope_rescue.1", "elder", ["hope_rescue"], ["hope"], 9),
+
+  line("stowaway.neutral.1", "stowaway", ["neutral", "distrust_group"], ["defensive"], 6),
+  line("stowaway.neutral.2", "stowaway", ["neutral", "distrust_group"], ["defensive"], 6),
+  line("stowaway.neutral.3", "stowaway", ["neutral", "distrust_group"], ["defensive"], 5),
+  line("stowaway.distrust_group.1", "stowaway", ["distrust_group"], ["suspicion"], 11),
+  line("stowaway.hidden_resource_secret.1", "stowaway", ["hidden_resource_secret"], ["secret"], 11),
+  line("stowaway.panic_personal.1", "stowaway", ["panic_personal"], ["fear"], 10),
+  line("stowaway.hostile_relationship.1", "stowaway", ["hostile_relationship"], ["conflict"], 10),
+  line("stowaway.collapse_phase.1", "stowaway", ["collapse_phase"], ["survival"], 11),
+];
+
+function line(id, characterId, setKeys, tags, weight) {
+  return {
+    id,
+    characterId,
+    setKeys,
+    tags,
+    weight,
+  };
+}
