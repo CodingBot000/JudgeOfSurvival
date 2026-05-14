@@ -110,13 +110,22 @@ const PORTRAIT_PATHS = {
   stowaway: "/character/portrait/portrait_nox_hooded_man.png",
 };
 
+const CHARACTER_BODY_PATHS = {
+  chairman: "/character/base-cutout/vale_rich.png",
+  nurse: "/character/base-cutout/clara_nurse.png",
+  soldier: "/character/base-cutout/grant_soldier.png",
+  influencer: "/character/base-cutout/mia_influencer.png",
+  elder: "/character/base-cutout/theo_old_man.png",
+  stowaway: "/character/base-cutout/nox_hooded_man.png",
+};
+
 const SCENE_POSITIONS = {
-  chairman: { left: 30, top: 42 },
-  nurse: { left: 47, top: 33 },
-  soldier: { left: 64, top: 43 },
-  influencer: { left: 38, top: 62 },
-  elder: { left: 55, top: 61 },
-  stowaway: { left: 72, top: 62 },
+  chairman: { left: 30, top: 65 },
+  nurse: { left: 47, top: 65 },
+  soldier: { left: 64, top: 65 },
+  influencer: { left: 38, top: 71 },
+  elder: { left: 55, top: 70 },
+  stowaway: { left: 72, top: 71 },
 };
 
 const CHARACTER_BADGES = {
@@ -361,6 +370,7 @@ export default function App() {
         game={game}
         done={done}
         t={t}
+        onOpenDetails={() => openPanel("details")}
         onPausedChange={(isPaused) =>
           runCommand({ type: COMMAND_TYPES.SET_PAUSED, isPaused })
         }
@@ -408,15 +418,6 @@ export default function App() {
         >
           <ScrollText size={17} aria-hidden="true" />
           <span>{t("web.nav.log")}</span>
-        </button>
-        <button
-          id="details-panel-btn"
-          type="button"
-          className="utility-action"
-          onClick={() => openPanel("details")}
-        >
-          <Gauge size={17} aria-hidden="true" />
-          <span>{t("web.panel.crisis")}</span>
         </button>
         <button
           id="nav-judgement"
@@ -668,6 +669,7 @@ function TimeControlBar({
   game,
   done,
   t,
+  onOpenDetails,
   onPausedChange,
   onTimeScaleChange,
 }) {
@@ -695,6 +697,14 @@ function TimeControlBar({
         <span>{t("web.time.next_card", { time: formatDuration(nextCardIn) })}</span>
       </div>
       <div className="time-actions">
+        <button
+          id="time-details-panel-btn"
+          type="button"
+          onClick={onOpenDetails}
+        >
+          <Gauge size={15} aria-hidden="true" />
+          <span>{t("web.panel.crisis")}</span>
+        </button>
         <button
           id="time-play-toggle"
           type="button"
@@ -772,17 +782,6 @@ function TrialScreen({ game, scenario, speechBubbles, t, onOpenPanel, onPlayCard
       </section>
 
       <section className="panel scene-panel">
-        <div className="panel-title-row">
-          <PanelHeader icon={<Waves size={18} />} title={t("web.panel.lifeboat")} />
-          <button
-            type="button"
-            className="tiny-panel-button"
-            onClick={() => onOpenPanel("details")}
-          >
-            <Gauge size={15} aria-hidden="true" />
-            <span>{t("web.panel.crisis")}</span>
-          </button>
-        </div>
         <LifeboatVisual game={game} speechBubbles={speechBubbles} t={t} />
         <CurrentFocus game={game} scenario={scenario} character={focusCharacter} t={t} />
         <section className="recent-log-panel">
@@ -1297,6 +1296,8 @@ function deathLogTargetName(game, entry) {
 }
 
 function LifeboatVisual({ game, speechBubbles, t }) {
+  const bubblesByCharacter = mapSpeechBubblesByCharacter(speechBubbles);
+
   return (
     <div className="boat-visual" role="img" aria-label={t("web.panel.lifeboat")}>
       <div className="sea-glow" aria-hidden="true" />
@@ -1309,20 +1310,49 @@ function LifeboatVisual({ game, speechBubbles, t }) {
       />
       {game.characters.map((character) => {
         const position = SCENE_POSITIONS[character.id] || { left: 50, top: 50 };
+        const speechBubble = bubblesByCharacter.get(character.id);
         return (
           <div
             key={character.id}
-            className={cx("boat-person", !character.alive && "dead")}
+            className={cx(
+              "boat-person",
+              speechBubble && "speaking",
+              !character.alive && "dead",
+            )}
             style={{ left: `${position.left}%`, top: `${position.top}%` }}
           >
-            <img src={portraitPath(character)} alt="" aria-hidden="true" draggable="false" />
+            <SpeechBubbleLayer bubble={speechBubble} />
+            <div className="boat-character-figure" aria-hidden="true">
+              <img
+                className="boat-character-portrait"
+                src={portraitPath(character)}
+                alt=""
+                draggable="false"
+              />
+              <img
+                className="boat-character-body"
+                src={characterBodyPath(character)}
+                alt=""
+                draggable="false"
+              />
+            </div>
             <span>{characterName(game, character)}</span>
           </div>
         );
       })}
-      <SpeechBubbleLayer bubbles={speechBubbles} />
     </div>
   );
+}
+
+function mapSpeechBubblesByCharacter(speechBubbles) {
+  const items = speechBubbles?.items || [];
+  const byCharacter = new Map();
+  items.forEach((item) => {
+    if (!byCharacter.has(item.characterId)) {
+      byCharacter.set(item.characterId, item);
+    }
+  });
+  return byCharacter;
 }
 
 function CurrentFocus({ game, scenario, character, t }) {
@@ -1406,6 +1436,10 @@ function focusReaction(game, character) {
 
 function portraitPath(character) {
   return PORTRAIT_PATHS[character.id] || "/character/portrait/portrait_nox_hooded_man.png";
+}
+
+function characterBodyPath(character) {
+  return CHARACTER_BODY_PATHS[character.id] || "/character/base-cutout/nox_hooded_man.png";
 }
 
 function Meter({ label, value, max, delta = 0 }) {

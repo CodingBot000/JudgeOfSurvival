@@ -242,6 +242,7 @@ button:disabled {
 .time-actions {
   display: flex;
   gap: 5px;
+  min-width: max-content;
 }
 
 .time-actions button {
@@ -559,24 +560,61 @@ button:disabled {
 }
 
 .boat-person {
-  --avatar-size: 38px;
+  --body-height: 104px;
+  --portrait-size: 30px;
   position: absolute;
   z-index: 2;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -56%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 1px;
   filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.8));
 }
 
-.boat-person img {
-  width: var(--avatar-size);
-  height: var(--avatar-size);
+.boat-person.speaking {
+  z-index: 6;
+}
+
+.boat-character-figure {
+  position: relative;
+  width: calc(var(--body-height) * 0.76);
+  height: var(--body-height);
+  flex: 0 0 auto;
+}
+
+.boat-character-portrait {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: 1px;
+  width: var(--portrait-size);
+  height: var(--portrait-size);
+  transform: translateX(-50%);
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(241, 195, 108, 0.78);
   background: #060707;
+  user-select: none;
+  pointer-events: none;
+}
+
+.boat-character-body {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 0;
+  width: auto;
+  height: var(--body-height);
+  transform: translateX(-50%);
+  object-fit: contain;
+  filter:
+    brightness(0.96)
+    contrast(1.15)
+    saturate(0.95)
+    drop-shadow(0 5px 5px rgba(0, 0, 0, 0.7));
+  user-select: none;
+  pointer-events: none;
 }
 
 .boat-person span {
@@ -598,19 +636,14 @@ button:disabled {
   filter: grayscale(0.9);
 }
 
-.speech-bubble-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  pointer-events: none;
-}
-
 .speech-bubble {
   position: absolute;
-  left: var(--bubble-left);
-  top: var(--bubble-top);
-  --bubble-offset: 20px;
-  max-width: min(128px, 34%);
+  z-index: 5;
+  left: 50%;
+  top: 0;
+  --bubble-offset: 10px;
+  width: max-content;
+  max-width: 136px;
   transform: translate(-50%, calc(-100% - var(--bubble-offset)));
   border: 1px solid rgba(230, 219, 190, 0.22);
   border-radius: 8px;
@@ -629,6 +662,7 @@ button:disabled {
   word-break: keep-all;
   overflow-wrap: anywhere;
   animation: speech-bubble-in 160ms ease-out both;
+  pointer-events: none;
 }
 
 .speech-bubble::after {
@@ -1585,31 +1619,32 @@ button:disabled {
   }
 
   .boat-person {
-    --avatar-size: 32px;
+    --body-height: 88px;
+    --portrait-size: 25px;
   }
 
   .speech-bubble {
-    --bubble-offset: 17px;
-    max-width: min(104px, 34%);
+    --bubble-offset: 8px;
+    max-width: 132px;
     padding: 4px 6px;
     font-size: 8px;
     line-height: 1.18;
   }
 
   .current-focus {
-    flex-basis: 62px;
-    grid-template-columns: 46px minmax(0, 1fr);
+    flex-basis: 56px;
+    grid-template-columns: 40px minmax(0, 1fr);
     gap: 8px;
-    padding: 12px 8px 6px;
+    padding: 10px 8px 5px;
   }
 
   .current-focus img {
-    width: 44px;
-    height: 44px;
+    width: 38px;
+    height: 38px;
   }
 
   .current-focus h2 {
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .current-focus h2 span,
@@ -1619,7 +1654,7 @@ button:disabled {
   }
 
   .recent-log-panel {
-    flex-basis: 94px;
+    display: none;
   }
 
   .time-control-bar {
@@ -1782,7 +1817,8 @@ button:disabled {
   }
 
   .boat-person {
-    --avatar-size: 31px;
+    --body-height: 84px;
+    --portrait-size: 24px;
   }
 
   .current-focus {
