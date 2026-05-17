@@ -360,13 +360,7 @@ export default function App() {
           </span>
           <div>
             <h1>{t("ui.title.game")}</h1>
-            <p>
-              {t("ui.title.chapter_1")} ·{" "}
-              {t("ui.status.turn", {
-                turn: game.boat.turn,
-                max_turn: game.boat.max_turn,
-              })}
-            </p>
+            <p>{t("ui.title.chapter_1")}</p>
           </div>
         </div>
 
