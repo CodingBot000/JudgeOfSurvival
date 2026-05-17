@@ -45,6 +45,83 @@ body {
     linear-gradient(180deg, #090a0a 0%, #030405 70%);
 }
 
+.intro-screen {
+  position: relative;
+  width: min(1680px, 100dvw);
+  height: 100dvh;
+  margin: 0 auto;
+  overflow: hidden;
+  background: #030405;
+}
+
+.intro-scene-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  user-select: none;
+  pointer-events: none;
+}
+
+.intro-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, 0.02) 48%, rgba(0, 0, 0, 0.45) 100%),
+    radial-gradient(circle at 50% 78%, rgba(255, 255, 255, 0.12), transparent 18%);
+}
+
+.intro-start-button {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  bottom: max(34px, calc(env(safe-area-inset-bottom) + 26px));
+  min-height: auto;
+  padding: 4px 18px;
+  transform: translateX(-50%);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #ffffff;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0;
+  text-shadow:
+    0 0 7px rgba(255, 255, 255, 0.9),
+    0 0 18px rgba(255, 255, 255, 0.52),
+    0 2px 8px rgba(0, 0, 0, 0.82);
+  animation: intro-start-pulse 1.14s ease-in-out infinite;
+}
+
+.intro-start-button:hover:not(:disabled) {
+  border-color: transparent;
+  transform: translateX(-50%);
+}
+
+@keyframes intro-start-pulse {
+  0%,
+  100% {
+    opacity: 0.74;
+    text-shadow:
+      0 0 5px rgba(255, 255, 255, 0.72),
+      0 0 12px rgba(255, 255, 255, 0.38),
+      0 2px 8px rgba(0, 0, 0, 0.82);
+  }
+
+  50% {
+    opacity: 1;
+    text-shadow:
+      0 0 9px rgba(255, 255, 255, 1),
+      0 0 24px rgba(255, 255, 255, 0.72),
+      0 2px 8px rgba(0, 0, 0, 0.82);
+  }
+}
+
 button,
 select {
   font: inherit;
@@ -350,12 +427,27 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.drag-scroll {
+  cursor: grab;
+}
+
+.drag-scroll.dragging {
+  cursor: grabbing;
+  user-select: none;
 }
 
 .compact-character {
-  min-height: 0;
-  flex: 1 1 0;
+  height: 74px;
+  min-height: 74px;
+  flex: 0 0 74px;
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr);
   gap: 8px;
@@ -560,11 +652,11 @@ button:disabled {
 }
 
 .boat-person {
-  --body-height: 104px;
-  --portrait-size: 30px;
+  --body-height: clamp(64px, min(12vw, 23dvh), 104px);
+  --portrait-size: clamp(18px, calc(var(--body-height) * 0.29), 30px);
   position: absolute;
   z-index: 2;
-  transform: translate(-50%, -56%);
+  transform: translate(-50%, calc(-56% - 20px));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -618,13 +710,13 @@ button:disabled {
 }
 
 .boat-person span {
-  max-width: 74px;
+  max-width: calc(var(--body-height) * 0.82);
   border-radius: 5px;
   padding: 2px 6px 3px;
   background: rgba(0, 0, 0, 0.72);
   color: var(--ink);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 11px;
+  font-size: clamp(9px, calc(var(--body-height) * 0.105), 11px);
   line-height: 1;
   white-space: nowrap;
   overflow: hidden;
@@ -1594,33 +1686,8 @@ button:disabled {
     font-size: 15px;
   }
 
-  .compact-character {
-    grid-template-columns: 42px minmax(0, 1fr);
-    gap: 6px;
-    padding: 4px;
-  }
-
-  .compact-character > img {
-    width: 42px;
-    height: 42px;
-  }
-
-  .compact-character h2 {
-    font-size: 14px;
-  }
-
-  .compact-character p,
-  .character-badge {
-    font-size: 10px;
-  }
-
-  .mini-stat > span:first-child {
-    display: none;
-  }
-
   .boat-person {
-    --body-height: 88px;
-    --portrait-size: 25px;
+    --body-height: clamp(56px, min(12vw, 23dvh), 88px);
   }
 
   .speech-bubble {
@@ -1817,8 +1884,7 @@ button:disabled {
   }
 
   .boat-person {
-    --body-height: 84px;
-    --portrait-size: 24px;
+    --body-height: clamp(54px, min(16vw, 19dvh), 84px);
   }
 
   .current-focus {

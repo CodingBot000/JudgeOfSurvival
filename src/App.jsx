@@ -142,6 +142,7 @@ const cx = (...parts) => parts.filter(Boolean).join(" ");
 export default function App() {
   const scenario = DEFAULT_SCENARIO;
   const [game, setGame] = useState(() => createInitialState(scenario));
+  const [hasStarted, setHasStarted] = useState(false);
   const [screen, setScreen] = useState("trial");
   const [activePanel, setActivePanel] = useState(null);
   const [debugOpen, setDebugOpen] = useState(false);
@@ -194,7 +195,7 @@ export default function App() {
   }, [done]);
 
   useEffect(() => {
-    if (done || game.simulation?.isPaused) {
+    if (!hasStarted || done || game.simulation?.isPaused) {
       return undefined;
     }
     let previousTimestamp = performance.now();
@@ -210,7 +211,7 @@ export default function App() {
       );
     }, 1000);
     return () => window.clearInterval(intervalId);
-  }, [done, game.simulation?.isPaused, scenario]);
+  }, [done, game.simulation?.isPaused, hasStarted, scenario]);
 
   useEffect(() => {
     const elapsed = game.simulation?.elapsedSeconds || 0;
@@ -225,6 +226,7 @@ export default function App() {
       const currentGame = gameRef.current;
       const blockers = uiBlockersRef.current;
       const blocked =
+        !hasStarted ||
         blockers.done ||
         blockers.activePanel ||
         blockers.debugOpen ||
@@ -247,7 +249,7 @@ export default function App() {
     }, 1500);
 
     return () => window.clearInterval(intervalId);
-  }, [scenario]);
+  }, [hasStarted, scenario]);
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -270,6 +272,7 @@ export default function App() {
           }
         : null;
       snapshot.speech_bubbles = summarizeSpeechBubbles(speechBubbles, performance.now());
+      snapshot.intro_screen = !hasStarted;
       return JSON.stringify(snapshot);
     };
     const renderText = () => renderTextFor(game);
@@ -288,7 +291,7 @@ export default function App() {
       delete window.render_game_to_text;
       delete window.advanceTime;
     };
-  }, [eventOverlay, game, scenario, screen, speechBubbles]);
+  }, [eventOverlay, game, hasStarted, scenario, screen, speechBubbles]);
 
   const languageOptions = useMemo(() => getLanguageOptions(game), [game.language]);
 
@@ -343,6 +346,10 @@ export default function App() {
       setDismissedOverlayId(pendingEventOverlay.id);
     }
   };
+
+  if (!hasStarted) {
+    return <IntroScreen onStart={() => setHasStarted(true)} />;
+  }
 
   return (
     <div className={cx("app-shell", debugOpen && "debug-open")}>
@@ -536,6 +543,28 @@ export default function App() {
         onClose={closeEventOverlay}
       />
     </div>
+  );
+}
+
+function IntroScreen({ onStart }) {
+  return (
+    <main className="intro-screen" aria-label="Game intro">
+      <img
+        className="intro-scene-image"
+        src="/background/intro_scene.png"
+        alt=""
+        aria-hidden="true"
+        draggable="false"
+      />
+      <button
+        id="start-game-btn"
+        type="button"
+        className="intro-start-button"
+        onClick={onStart}
+      >
+        START
+      </button>
+    </main>
   );
 }
 
@@ -810,8 +839,18 @@ function TrialScreen({ game, scenario, speechBubbles, t, onOpenPanel, onPlayCard
 }
 
 function CompactRoster({ game, scenario, t }) {
+  const dragScroll = useMouseDragScroll();
+
   return (
-    <div className="compact-roster">
+    <div
+      className="compact-roster drag-scroll"
+      ref={dragScroll.ref}
+      onPointerDown={dragScroll.onPointerDown}
+      onPointerMove={dragScroll.onPointerMove}
+      onPointerUp={dragScroll.onPointerUp}
+      onPointerCancel={dragScroll.onPointerUp}
+      onPointerLeave={dragScroll.onPointerUp}
+    >
       {game.characters.map((character) => (
         <article
           key={character.id}
@@ -857,6 +896,59 @@ function CompactRoster({ game, scenario, t }) {
       ))}
     </div>
   );
+}
+
+function useMouseDragScroll() {
+  const ref = useRef(null);
+  const drag = useRef({
+    active: false,
+    pointerId: null,
+    startY: 0,
+    scrollTop: 0,
+  });
+
+  const stopDrag = (event) => {
+    const element = ref.current;
+    if (!element || !drag.current.active) {
+      return;
+    }
+    if (event?.pointerId === drag.current.pointerId && element.hasPointerCapture?.(event.pointerId)) {
+      element.releasePointerCapture(event.pointerId);
+    }
+    drag.current.active = false;
+    drag.current.pointerId = null;
+    element.classList.remove("dragging");
+  };
+
+  return {
+    ref,
+    onPointerDown: (event) => {
+      if (event.pointerType !== "mouse" || event.button !== 0) {
+        return;
+      }
+      const element = ref.current;
+      if (!element || element.scrollHeight <= element.clientHeight) {
+        return;
+      }
+      drag.current = {
+        active: true,
+        pointerId: event.pointerId,
+        startY: event.clientY,
+        scrollTop: element.scrollTop,
+      };
+      element.classList.add("dragging");
+      element.setPointerCapture?.(event.pointerId);
+    },
+    onPointerMove: (event) => {
+      const element = ref.current;
+      if (!element || !drag.current.active || event.pointerId !== drag.current.pointerId) {
+        return;
+      }
+      element.scrollTop = drag.current.scrollTop - (event.clientY - drag.current.startY);
+      event.preventDefault();
+    },
+    onPointerUp: stopDrag,
+  };
 }
 
 function CharacterBadge({ game, character }) {
